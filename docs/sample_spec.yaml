@@ -1,0 +1,87 @@
+# Sample script specification
+
+
+inputs:
+    - ifile1 : datastore/path/to/ifile1
+    - ifile2 : datastore/path/to/ifile2
+
+outputs:
+    - ofile1 : datastore/path/to/ofile1
+    - ofile2 : datastore/path/to/ofile2
+    - ofile3 : datastore/path/to/ofile3
+
+# inputs and outputs are lists of local file <-> datastore maps
+#
+# let's think about a datastore as something that scripts can not directly
+# access
+
+
+script: create_x_from_y.py
+# relative path from this specification to file to execute
+
+# script type: python
+## default script type will be python
+## in the future we might add support for other types:
+## sh, bash, stata
+
+
+python dependencies:
+    - csvtools>0.1
+    - numpy==1.7.1
+    - pandas>=0.9.0
+
+# optional, by default a standard vanilla python virtualenv is entered
+# - without site-packages!
+
+
+options:
+    - uses psql
+
+    # should we provide access to a clean database?
+    # if set, a new database will be created for use by the script and
+    # connection parameters are set up so, that `psql` will connect to the new
+    # database without any parameters/passwords
+    #
+    # ''' When the defaults aren't quite right, you can save yourself
+    # some typing by setting the environment variables PGDATABASE, PGHOST,
+    # PGPORT and/or PGUSER to appropriate values. (For additional environment
+    # variables, see Section 31.13, “Environment Variables”, in the
+    # documentation.) It is also convenient to have a ~/.pgpass file to avoid
+    # regularly having to type in passwords. See Section 31.14,
+    # “The Password File”, in the documentation for more information.
+    # http://www.postgresql.org/docs/9.1/static/libpq-pgpass.html :
+    # The file .pgpass in a user's home directory or the file referenced
+    # by PGPASSFILE can contain passwords to be used if the connection requires
+    # a password...
+    # This file should contain lines of the following format:
+    # hostname:port:database:username:password
+    # '''
+
+    - keep database
+
+    # should we keep the database after the script-run?
+    # if set, the database will not be dropped after the script.
+    # NOTE:
+    # this is intended for debug purposes only,
+    # so debug must be explicitly set as well!
+    #
+    # databases are created with unique progressive names,
+    # so even if the database is kept, reusing them later
+    # is not possible (db name is "hard" to guess - e.g. includes timestamp)
+
+    - debug
+
+    # do we still experimenting with this script?
+    # if set,
+    # - output is not saved,
+    # - the virtualenv is not cached (removed after run if created)
+    # - the temporary directory is well known and not removed after run
+
+
+description: >
+    free style text for documentation
+    it should e.g. describe
+    - what this script do
+    - what are the outputs
+    - why it is important
+    ...

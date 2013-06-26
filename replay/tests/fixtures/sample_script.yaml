@@ -1,0 +1,12 @@
+inputs:
+    - input : dsinput
+
+outputs:
+    - output : dsoutput
+
+script: run.py
+
+python dependencies:
+
+options:
+    - some option

@@ -1,0 +1,75 @@
+class ScriptSpecification:
+	- script_dir
+	- inputs
+	- outputs
+	- executable_name
+	- python_dependencies
+	def has_option()
+
+
+class DataStore:
+	? root = externals.External
+
+	def download(self, datastore_path, destination):
+		error: path does not exist
+	def link(self, datastore_path, destination):
+		same as download
+	def upload(self, source, datastore_path):
+		error: path already exists
+	def create_time_of(self, datastore_path):
+		# for dependencies:
+		error: path does not exist
+	def replace(self, source, destination):
+
+
+class Context:
+	- datastore
+	- virtualenv_parent_dir (we might cache/keep virtualenvs)
+
+
+class Runner:
+	def __init__(self, context, script_specification):
+	def run(self):
+		with in_temporary_directory():
+			self.check_preconditions()
+
+			self.setup_script_env()
+			self.run_script_in_virtualenv()
+
+			self.check_postconditions()
+			self.upload_outputs_to_datastore()
+			self.clean_up()
+	def check_preconditions(self):
+	def setup_script_env(self):
+	def run_script_in_virtualenv(self):
+	def check_postconditions(self):
+	def upload_outputs_to_datastore(self):
+
+
+Precondition[s]:
+- check existence of inputs
+
+Postcondition[s]:
+- check existence of outputs
+- verify that the inputs have not changed (optional? then we can not use hard-links)
+
+setup actions:
+- [create and enter temporary directory]
+- link inputs from datastore to CWD
+- create new virtualenv (if needed) with the given requirements
+- create new database (with name {script_name}_{datetime})
+
+cleanup actions:
+- drop database (if not kept explicitly)
+- [restore CWD, remove temporary directory]
+
+
+Testable requirements:
+- run: script's preconditions are checked (input files exists)
+- run: script environment is set up by running setup actions
+- setup actions can register cleanup actions
+- required dependencies are available for the script
+- the script can import files in its directory
+- error during script run should produce some output
+- specified inputs are available to script
+- specified outputs are uploaded to datastore
