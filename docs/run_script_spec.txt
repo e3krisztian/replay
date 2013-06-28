@@ -15,11 +15,9 @@ class DataStore:
 	def link(self, datastore_path, destination):
 		same as download
 	def upload(self, source, datastore_path):
-		error: path already exists
 	def create_time_of(self, datastore_path):
 		# for dependencies:
 		error: path does not exist
-	def replace(self, source, destination):
 
 
 class Context:
