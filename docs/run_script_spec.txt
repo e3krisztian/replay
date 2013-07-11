@@ -7,21 +7,16 @@ class ScriptSpecification:
 	def has_option()
 
 
-class DataStore:
-	? root = externals.External
-
-	def download(self, datastore_path, destination):
-		error: path does not exist
-	def link(self, datastore_path, destination):
-		same as download
-	def upload(self, source, datastore_path):
-	def create_time_of(self, datastore_path):
+DataStore = External
+add new property to External:
+	def create_time(self):
 		# for dependencies:
 		error: path does not exist
 
 
+
 class Context:
-	- datastore
+	- datastore (an external)
 	- virtualenv_parent_dir (we might cache/keep virtualenvs)
 
 
