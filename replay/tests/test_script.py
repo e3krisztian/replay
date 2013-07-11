@@ -1,14 +1,7 @@
 import unittest
 import os.path
 import replay.script as m
-from StringIO import StringIO
-
-
-FIXTURES_DIR = os.path.join(os.path.dirname(__file__), 'fixtures')
-
-
-def script_from(string, dir=FIXTURES_DIR):
-    return m.Script(dir, StringIO(string))
+from replay.tests.script import FIXTURES_DIR, script_from
 
 
 class Test_Script(unittest.TestCase):
