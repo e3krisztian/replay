@@ -54,7 +54,9 @@ class Test_Script(unittest.TestCase):
                 - lxml=3.2.1
             ''')
 
-        self.assertEqual(['PyYAML==3.10', 'lxml=3.2.1'], script.python_dependencies)
+        self.assertEqual(
+            ['PyYAML==3.10', 'lxml=3.2.1'],
+            script.python_dependencies)
 
     def test_has_option(self):
         script = script_from('''\
