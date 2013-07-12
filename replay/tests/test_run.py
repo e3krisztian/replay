@@ -21,7 +21,7 @@ class Test_Context(unittest.TestCase):
         self.assertEqual(default, m.Context().virtualenv_parent_dir.path)
 
 
-class Test_Runner(unittest.TestCase):
+class Test_Runner_check_inputs(unittest.TestCase):
 
     def test_input_file_missing_is_error(self):
         script = script_from(
@@ -29,8 +29,24 @@ class Test_Runner(unittest.TestCase):
             inputs:
                 - missing: missing
             ''')
+        runner = m.Runner(m.Context(MemoryStore()), script)
         with self.assertRaises(exceptions.MissingInput):
-            m.Runner(m.Context(MemoryStore()), script)
+            runner.check_inputs()
+
+    def test_inputs_are_there_proceeds(self):
+        script = script_from(
+            '''\
+            inputs:
+                - existing: somewhere/existing file
+            ''')
+        store = MemoryStore()
+        (store / 'somewhere' / 'existing file').content = 'some content'
+        runner = m.Runner(m.Context(store), script)
+
+        runner.check_inputs()
+
+
+class Test_Runner(unittest.TestCase):
 
     @unittest.skip('unimplemented')
     def test_script_is_run_in_a_different_directory(self):

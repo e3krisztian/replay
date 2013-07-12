@@ -20,7 +20,6 @@ class Runner(object):
     def __init__(self, context, script):
         self.context = context
         self.script = script
-        self.check_inputs()
 
     def check_inputs(self):
         datastore = self.context.datastore
