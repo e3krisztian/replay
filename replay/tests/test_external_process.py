@@ -2,6 +2,7 @@ import unittest
 from temp_dir import in_temp_dir
 import replay.external_process as m
 import os
+import textwrap
 
 
 class Test_run(unittest.TestCase):
@@ -32,3 +33,18 @@ class Test_run(unittest.TestCase):
         os.environ['V2'] = 'V2SET'
         result = m.run(['/bin/sh', '-c', 'echo $V2'], env=env)
         self.assertNotIn('V2SET', result.stdout)
+
+    def test_str(self):
+        result = m.run(['/bin/sh', '-c', 'echo test output'])
+        expected = textwrap.dedent(
+            '''\
+            Command execution result
+            COMMAND:
+              ('/bin/sh', '-c', 'echo test output')
+            STATUS:
+              0
+            STDOUT:
+              test output
+            ''').splitlines()
+        actual = str(result).splitlines()
+        self.assertListEqual(expected, actual)
