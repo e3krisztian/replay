@@ -64,3 +64,13 @@ class Runner(object):
         external_process.run(['virtualenv', self.virtualenv_dir.path])
         for package_spec in self.script.python_dependencies:
             self.install_package(package_spec, index_server_url)
+
+    def upload_outputs(self):
+        datastore = self.context.datastore
+        working_directory = fspath.working_directory()
+        for output_spec in self.script.outputs:
+            for local_file, ds_file in output_spec.iteritems():
+                (working_directory / local_file).copy_to(datastore / ds_file)
+
+    def run(self):
+        pass

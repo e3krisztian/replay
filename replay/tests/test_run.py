@@ -158,11 +158,40 @@ class Test_Runner_run_in_virtualenv(unittest.TestCase):
             self.assertEqual('XXIII', result.stdout.rstrip())
 
 
-class Test_Runner(unittest.TestCase):
+class Test_Runner_upload_results(unittest.TestCase):
 
-    @TODO
+    @within_temp_dir
+    def test_outputs_are_uploaded_to_datastore(self):
+        f = RunnerFixture(
+            '''\
+            outputs:
+                - an output file: /output/datastore/path
+            ''')
+
+        (working_directory() / 'an output file').content = 'data'
+        f.runner.upload_outputs()
+
+        self.assertEqual('data', (f.datastore / 'output/datastore/path').content)
+
+
+class Test_Runner_run(unittest.TestCase):
+
+    @TODO  # missing result upload
+    @within_temp_dir
     def test_script_is_run_in_a_different_directory(self):
-        pass
+        f = RunnerFixture(
+            '''\
+            outputs:
+                - working_directory : /
+
+            script: scripts/getcwd.py
+            ''')
+
+        f.runner.run()
+
+        assert False, f.datastore.content
+        self.assertNotEqual(f.datastore.content)
+
 
     @TODO
     def test_script_dependencies_are_available(self):
