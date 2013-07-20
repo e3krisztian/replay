@@ -79,6 +79,13 @@ class Runner(object):
             for local_file, ds_file in output_spec.iteritems():
                 (working_directory / local_file).copy_to(datastore / ds_file)
 
+    def download_inputs(self):
+        datastore = self.context.datastore
+        working_directory = fspath.working_directory()
+        for input_spec in self.script.inputs:
+            for local_file, ds_file in input_spec.iteritems():
+                (datastore / ds_file).copy_to(working_directory / local_file)
+
     def run(self):
         executable_script = os.path.join(
             self.script.dir,
@@ -86,6 +93,7 @@ class Runner(object):
 
         with in_temp_dir():
             self.make_virtualenv()
+            self.download_inputs()
             result = self.run_in_virtualenv(['python', executable_script])
             if result.status != 0:
                 raise exceptions.ScriptError(result)

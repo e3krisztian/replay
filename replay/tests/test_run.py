@@ -214,9 +214,21 @@ class Test_Runner_run(unittest.TestCase):
 
         f.runner.run()
 
-    @TODO
+    @within_temp_dir
     def test_input_files_are_available_to_script(self):
-        pass
+        f = RunnerFixture(
+            '''\
+            inputs:
+                - file1: data1
+                - file2: deeper/data2
+
+            script: scripts/check_inputs.py
+            ''')
+
+        (f.datastore / 'data1').content = 'OK'
+        (f.datastore / 'deeper/data2').content = 'exists, too'
+
+        f.runner.run()
 
     @TODO
     def test_generated_output_files_are_uploaded_to_datastore(self):
