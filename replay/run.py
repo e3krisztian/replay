@@ -9,14 +9,20 @@ class Context(object):
 
     datastore = None  # External
     virtualenv_parent_dir = str
+    index_server_url = str
 
-    def __init__(self, datastore=None, virtualenv_parent_dir=None):
+    def __init__(
+            self,
+            datastore=None,
+            virtualenv_parent_dir=None,
+            index_server_url=None):
         wd = fspath.working_directory()
         self.datastore = datastore or wd
         if virtualenv_parent_dir:
             self.virtualenv_parent_dir = virtualenv_parent_dir
         else:
             self.virtualenv_parent_dir = wd / '.virtualenvs'
+        self.index_server_url = index_server_url
 
 
 class Runner(object):
@@ -54,7 +60,7 @@ class Runner(object):
         if result.status != 0:
             raise exceptions.MissingPythonDependency(result)
 
-    def make_virtualenv(self, index_server_url=None):
+    def make_virtualenv(self):
         # potential enhancements:
         #  - clean environment from behavior changing settings
         #    (e.g. PYTHON_VIRTUALENV)
@@ -64,7 +70,7 @@ class Runner(object):
 
         external_process.run(['virtualenv', self.virtualenv_dir.path])
         for package_spec in self.script.python_dependencies:
-            self.install_package(package_spec, index_server_url)
+            self.install_package(package_spec, self.context.index_server_url)
 
     def upload_outputs(self):
         datastore = self.context.datastore
@@ -74,7 +80,13 @@ class Runner(object):
                 (working_directory / local_file).copy_to(datastore / ds_file)
 
     def run(self):
-        executable_script = os.path.join(self.script.dir, self.script.executable_name)
+        executable_script = os.path.join(
+            self.script.dir,
+            self.script.executable_name)
+
         with in_temp_dir():
-            self.run_in_virtualenv(['python', executable_script])
+            self.make_virtualenv()
+            result = self.run_in_virtualenv(['python', executable_script])
+            if result.status != 0:
+                raise exceptions.ScriptError(result)
             self.upload_outputs()

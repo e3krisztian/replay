@@ -4,7 +4,6 @@ from replay.tests.script import script_from
 from replay.tests.path2url import path2url
 from replay import external_process
 import replay.run as m
-import contextlib
 
 import os.path
 from replay import exceptions
@@ -34,9 +33,21 @@ class RunnerFixture(object):
             venv_parent_dir = working_directory() / 'replay_virtualenvs'
 
         self.datastore = MemoryStore()
-        self.context = m.Context(self.datastore, venv_parent_dir)
+        self.context = m.Context(
+            self.datastore,
+            venv_parent_dir,
+            self._local_pypi_url)
         self.script = script_from(script)
         self.runner = m.Runner(self.context, self.script)
+
+    @property
+    def _local_pypi_url(self):
+        index_server_dir = pkg_resources.resource_filename(
+            'replay', 'tests/fixtures/pypi/simple')
+        assert os.path.isdir(index_server_dir), index_server_dir
+        index_server_url = path2url(index_server_dir)
+
+        return index_server_url
 
 
 class Test_Runner_check_inputs(unittest.TestCase):
@@ -60,19 +71,6 @@ class Test_Runner_check_inputs(unittest.TestCase):
         (f.datastore / 'somewhere' / 'existing file').content = 'some content'
 
         f.runner.check_inputs()
-
-
-@contextlib.contextmanager
-def local_pypi_url():
-    try:
-        index_server_dir = pkg_resources.resource_filename(
-            'replay', 'tests/fixtures/pypi/simple')
-        assert os.path.isdir(index_server_dir), index_server_dir
-        index_server_url = path2url(index_server_dir)
-
-        yield index_server_url
-    finally:
-        pkg_resources.cleanup_resources(force=True)
 
 
 class Test_Runner_make_virtualenv(unittest.TestCase):
@@ -106,56 +104,53 @@ class Test_Runner_make_virtualenv(unittest.TestCase):
 
     @within_temp_dir
     def test_new_virtualenv_has_all_the_required_packages(self):
-        with local_pypi_url() as index_server_url:
-            f = RunnerFixture(
-                '''\
-                python dependencies:
-                    - roman==2.0.0
-                ''')
-            f.runner.make_virtualenv(index_server_url)
+        f = RunnerFixture(
+            '''\
+            python dependencies:
+                - roman==2.0.0
+            ''')
+        f.runner.make_virtualenv()
 
-            # verify, that we can import the required "roman" module
-            python = f.runner.virtualenv_dir / 'bin/python'
-            program = 'import roman; print(roman.toRoman(23))'
-            cmdspec = [python.path, '-c', program]
-            result = external_process.run(cmdspec)
+        # verify, that we can import the required "roman" module
+        python = f.runner.virtualenv_dir / 'bin/python'
+        program = 'import roman; print(roman.toRoman(23))'
+        cmdspec = [python.path, '-c', program]
+        result = external_process.run(cmdspec)
 
-            if result.status:
-                print(result)
-            self.assertEqual('XXIII', result.stdout.rstrip())
+        if result.status:
+            print(result)
+        self.assertEqual('XXIII', result.stdout.rstrip())
 
     @within_temp_dir
     def test_required_package_not_installed_is_an_error(self):
-        with local_pypi_url() as index_server_url:
-            f = RunnerFixture(
-                '''\
-                python dependencies:
-                    - remedy_for_all_problems==0.42.0
-                ''')
-            with self.assertRaises(exceptions.MissingPythonDependency):
-                f.runner.make_virtualenv(index_server_url)
+        f = RunnerFixture(
+            '''\
+            python dependencies:
+                - remedy_for_all_problems==0.42.0
+            ''')
+        with self.assertRaises(exceptions.MissingPythonDependency):
+            f.runner.make_virtualenv()
 
 
 class Test_Runner_run_in_virtualenv(unittest.TestCase):
 
     @within_temp_dir
     def test_module_in_virtualenv_is_available(self):
-        with local_pypi_url() as index_server_url:
-            f = RunnerFixture(
-                '''\
-                python dependencies:
-                    - roman==2.0.0
-                ''')
-            f.runner.make_virtualenv(index_server_url)
+        f = RunnerFixture(
+            '''\
+            python dependencies:
+                - roman==2.0.0
+            ''')
+        f.runner.make_virtualenv()
 
-            # verify, that we can import the required "roman" module
-            cmdspec = [
-                'python', '-c', 'import roman; print(roman.toRoman(23))']
-            result = f.runner.run_in_virtualenv(cmdspec)
+        # verify, that we can import the required "roman" module
+        cmdspec = [
+            'python', '-c', 'import roman; print(roman.toRoman(23))']
+        result = f.runner.run_in_virtualenv(cmdspec)
 
-            if result.status:
-                print(result)
-            self.assertEqual('XXIII', result.stdout.rstrip())
+        if result.status:
+            print(result)
+        self.assertEqual('XXIII', result.stdout.rstrip())
 
 
 class Test_Runner_upload_results(unittest.TestCase):
@@ -171,7 +166,9 @@ class Test_Runner_upload_results(unittest.TestCase):
         (working_directory() / 'an output file').content = 'data'
         f.runner.upload_outputs()
 
-        self.assertEqual('data', (f.datastore / 'output/datastore/path').content)
+        self.assertEqual(
+            'data',
+            (f.datastore / 'output/datastore/path').content)
 
 
 class Test_Runner_run(unittest.TestCase):
@@ -195,10 +192,27 @@ class Test_Runner_run(unittest.TestCase):
             os.path.normpath(f.script.dir),
             os.path.normpath(f.datastore.content))
 
+    @within_temp_dir
+    def test_nonzero_exit_status_is_an_error(self):
+        f = RunnerFixture(
+            '''\
+            script: scripts/this_script_does_not_exist_should_cause_an_error.py
+            ''')
 
-    @TODO
+        with self.assertRaises(exceptions.ScriptError):
+            f.runner.run()
+
+    @within_temp_dir
     def test_script_dependencies_are_available(self):
-        pass
+        f = RunnerFixture(
+            '''\
+            python dependencies:
+                - roman==2.0.0
+
+            script: scripts/import_roman.py
+            ''')
+
+        f.runner.run()
 
     @TODO
     def test_input_files_are_available_to_script(self):

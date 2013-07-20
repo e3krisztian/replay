@@ -6,3 +6,8 @@ class MissingInput(Exception):
 class MissingPythonDependency(Exception):
 
     '''A python dependency can not be installed'''
+
+
+class ScriptError(Exception):
+
+    '''The script terminated with an error'''
