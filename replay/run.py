@@ -2,6 +2,7 @@ import os
 from externals import fspath
 from replay import exceptions
 import external_process
+from temp_dir import in_temp_dir
 
 
 class Context(object):
@@ -73,4 +74,7 @@ class Runner(object):
                 (working_directory / local_file).copy_to(datastore / ds_file)
 
     def run(self):
-        pass
+        executable_script = os.path.join(self.script.dir, self.script.executable_name)
+        with in_temp_dir():
+            self.run_in_virtualenv(['python', executable_script])
+            self.upload_outputs()

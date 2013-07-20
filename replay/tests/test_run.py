@@ -6,7 +6,7 @@ from replay import external_process
 import replay.run as m
 import contextlib
 
-import os
+import os.path
 from replay import exceptions
 from externals.fake import Fake as MemoryStore
 from externals.fspath import working_directory
@@ -176,7 +176,6 @@ class Test_Runner_upload_results(unittest.TestCase):
 
 class Test_Runner_run(unittest.TestCase):
 
-    @TODO  # missing result upload
     @within_temp_dir
     def test_script_is_run_in_a_different_directory(self):
         f = RunnerFixture(
@@ -189,8 +188,12 @@ class Test_Runner_run(unittest.TestCase):
 
         f.runner.run()
 
-        assert False, f.datastore.content
-        self.assertNotEqual(f.datastore.content)
+        self.assertNotEqual(
+            os.path.normpath(os.getcwd()),
+            os.path.normpath(f.datastore.content))
+        self.assertNotEqual(
+            os.path.normpath(f.script.dir),
+            os.path.normpath(f.datastore.content))
 
 
     @TODO
