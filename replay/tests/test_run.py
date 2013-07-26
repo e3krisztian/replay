@@ -243,3 +243,59 @@ class Test_Runner_run(unittest.TestCase):
 
         self.assertEqual('content', (f.datastore / 'data-copy').content)
         self.assertEqual('content', (f.datastore / 'another-copy').content)
+
+
+class Test_Runner_virtualenv_name(unittest.TestCase):
+
+    @TODO
+    def test_virtualenv_name_of_scripts_without_required_packages(self):
+        pass
+
+    @TODO
+    def test_virtualenv_name_depends_on_required_python_packages(self):
+        pass
+
+
+class Test_Runner_script_options(unittest.TestCase):
+
+    @TODO
+    def test_uses_psql_adds_setup_action(self):
+        pass
+
+    @TODO
+    def test_uses_psql_adds_cleanup_action(self):
+        pass
+
+    @TODO
+    def test_keep_database_no_cleanup_action_is_added(self):
+        pass
+
+
+class Test_setup_psql(unittest.TestCase):
+
+    # @skip_if_not_safe_to_drop_db
+    # # - to prevent dropping a user's database by accident
+    @TODO
+    def test_env_REPLAY_DROP_DB_missing_is_an_error(self):
+        pass
+
+    # @skip_if_not_safe_to_drop_db
+    # # - to prevent dropping a user's database by accident
+    @TODO
+    def test_env_REPLAY_DROP_DB_present_user_database_recreated(self):
+        pass
+
+
+class Test_cleanup_psql(unittest.TestCase):
+
+    # @skip_if_not_safe_to_drop_db
+    # # - to prevent dropping a user's database by accident
+    @TODO
+    def test_env_REPLAY_DROP_DB_missing_is_an_error(self):
+        pass
+
+    # @skip_if_not_safe_to_drop_db
+    # # - to prevent dropping a user's database by accident
+    @TODO
+    def test_env_REPLAY_DROP_DB_present_user_database_dropped(self):
+        pass
