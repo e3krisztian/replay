@@ -35,16 +35,20 @@ class Test_run(unittest.TestCase):
         self.assertNotIn('V2SET', result.stdout)
 
     def test_str(self):
-        result = m.run(['/bin/sh', '-c', 'echo test output'])
+        result = m.run(
+            ['/bin/sh', '-c', 'echo test output; echo test stderr >&2']
+            )
         expected = textwrap.dedent(
             '''\
             Command execution result
             COMMAND:
-              ('/bin/sh', '-c', 'echo test output')
+              ('/bin/sh', '-c', 'echo test output; echo test stderr >&2')
             STATUS:
               0
             STDOUT:
               test output
+            STDERR:
+              test stderr
             ''').splitlines()
         actual = str(result).splitlines()
         self.assertListEqual(expected, actual)
