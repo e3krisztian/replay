@@ -1,6 +1,4 @@
 PyYAML==3.10
 externals
 virtualenv
-
-# tests:
 temp_dir

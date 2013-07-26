@@ -26,11 +26,8 @@ class Test_Context(unittest.TestCase):
 
 class RunnerFixture(object):
 
-    def __init__(self, script, virtualenv_parent_dir=None):
-        if virtualenv_parent_dir:
-            venv_parent_dir = virtualenv_parent_dir
-        else:
-            venv_parent_dir = working_directory() / 'replay_virtualenvs'
+    def __init__(self, script):
+        venv_parent_dir = working_directory() / 'replay_virtualenvs'
 
         self.datastore = MemoryStore()
         self.context = m.Context(
@@ -117,8 +114,7 @@ class Test_Runner_make_virtualenv(unittest.TestCase):
         cmdspec = [python.path, '-c', program]
         result = external_process.run(cmdspec)
 
-        if result.status:
-            print(result)
+        # if result.status: print(result)
         self.assertEqual('XXIII', result.stdout.rstrip())
 
     @within_temp_dir
@@ -148,8 +144,7 @@ class Test_Runner_run_in_virtualenv(unittest.TestCase):
             'python', '-c', 'import roman; print(roman.toRoman(23))']
         result = f.runner.run_in_virtualenv(cmdspec)
 
-        if result.status:
-            print(result)
+        # if result.status: print(result)
         self.assertEqual('XXIII', result.stdout.rstrip())
 
 
