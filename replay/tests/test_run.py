@@ -230,6 +230,21 @@ class Test_Runner_run(unittest.TestCase):
 
         f.runner.run()
 
-    @TODO
+    @within_temp_dir
     def test_generated_output_files_are_uploaded_to_datastore(self):
-        pass
+        f = RunnerFixture(
+            '''\
+            inputs:
+                - file: data
+
+            outputs:
+                - file: data-copy
+                - file: another-copy
+            ''')
+
+        (f.datastore / 'data').content = 'content'
+
+        f.runner.run()
+
+        self.assertEqual('content', (f.datastore / 'data-copy').content)
+        self.assertEqual('content', (f.datastore / 'another-copy').content)
