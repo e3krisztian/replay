@@ -2,7 +2,7 @@ import os
 from externals import fspath
 from replay import exceptions
 import external_process
-from temp_dir import within_temp_dir
+from replay import plugins
 
 
 class Context(object):
@@ -10,12 +10,14 @@ class Context(object):
     datastore = None  # External
     virtualenv_parent_dir = str
     index_server_url = str
+    working_directory = str  # low level path, NOT an External!
 
     def __init__(
             self,
             datastore=None,
             virtualenv_parent_dir=None,
-            index_server_url=None):
+            index_server_url=None,
+            working_directory=None):
         wd = fspath.working_directory()
         self.datastore = datastore or wd
         if virtualenv_parent_dir:
@@ -23,6 +25,7 @@ class Context(object):
         else:
             self.virtualenv_parent_dir = wd / '.virtualenvs'
         self.index_server_url = index_server_url
+        self.working_directory = working_directory or (wd / 'temp').path
 
 
 class Runner(object):
@@ -98,8 +101,10 @@ class Runner(object):
             if result.status != 0:
                 raise exceptions.ScriptError(result)
 
-    @within_temp_dir
     def run(self):
+        wdp = plugins.WorkingDirectory()
+        wdp.before_execute(self)
         self.download_inputs()
         self._run_executable()
         self.upload_outputs()
+        wdp.after_execute(self)

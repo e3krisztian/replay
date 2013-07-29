@@ -23,6 +23,11 @@ class Test_Context(unittest.TestCase):
         default = os.path.join(os.getcwd(), '.virtualenvs')
         self.assertEqual(default, m.Context().virtualenv_parent_dir.path)
 
+    def test_working_directory_defaults_to_temp_in_current_directory(self):
+        self.assertEqual(
+            (working_directory() / 'temp').path,
+            m.Context().working_directory)
+
 
 class RunnerFixture(object):
 
@@ -169,7 +174,7 @@ class Test_Runner_upload_results(unittest.TestCase):
 class Test_Runner_run(unittest.TestCase):
 
     @within_temp_dir
-    def test_script_is_run_in_a_different_directory(self):
+    def test_script_is_run_in_context_specified_directory(self):
         f = RunnerFixture(
             '''\
             outputs:
@@ -180,11 +185,8 @@ class Test_Runner_run(unittest.TestCase):
 
         f.runner.run()
 
-        self.assertNotEqual(
-            os.path.normpath(os.getcwd()),
-            os.path.normpath(f.datastore.content))
-        self.assertNotEqual(
-            os.path.normpath(f.script.dir),
+        self.assertEqual(
+            os.path.normpath(f.context.working_directory),
             os.path.normpath(f.datastore.content))
 
     @within_temp_dir
@@ -299,3 +301,34 @@ class Test_cleanup_psql(unittest.TestCase):
     @TODO
     def test_env_REPLAY_DROP_DB_present_user_database_dropped(self):
         pass
+
+
+# refactor Runner - add plugin interface & move actions into plugins
+#
+# REQ:
+# - plugins' before_execute should be run in requested order
+# - after_execute actions are run in reverse order of registration
+# - after_execute actions are run even if there is an exception in
+#   - before_execute of another plugin
+#   - while running the executable
+#   - in an after_execute action
+# - the executable is not run if there is an exception in a plugin's .before_execute
+# - after_execute is run only for those plugins whose before_execute action was run
+
+
+# plugins:
+#   working directory:  (temporary? ramdisk? how to configure? - runner.context.script_working_directory)
+#       before_execute: create & enter script working directory
+#       after_execute: restore directory, remove script working directory
+#   datastore:  (runner.context.datastore)
+#       before_execute: copy inputs from datastore
+#       after_execute: copy outputs to datastore
+#   virtualenv:
+#       before_execute: if not already exists create new virtualenv & install requirements
+#       after_execute: NOOP
+#   postgresql:  (database name {USER}_{script_name}_{datetime})
+#       before_execute: create database
+#       after_execute: drop database (unless debugging & explicitly requested)
+#     NOTE:
+#           runner should store script_name
+#           should tests be configurable to run/not run database tests?
