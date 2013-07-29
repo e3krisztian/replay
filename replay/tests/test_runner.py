@@ -24,29 +24,6 @@ class Test_Context(unittest.TestCase):
             m.Context().working_directory.path)
 
 
-class Test_Runner_check_inputs(unittest.TestCase):
-
-    def test_input_file_missing_is_error(self):
-        f = fixtures.Runner(
-            '''\
-            inputs:
-                - missing: missing
-            ''')
-
-        with self.assertRaises(exceptions.MissingInput):
-            f.runner.check_inputs()
-
-    def test_inputs_are_there_proceeds(self):
-        f = fixtures.Runner(
-            '''\
-            inputs:
-                - existing: somewhere/existing file
-            ''')
-        (f.datastore / 'somewhere' / 'existing file').content = 'some content'
-
-        f.runner.check_inputs()
-
-
 class Test_Runner_make_virtualenv(unittest.TestCase):
 
     @within_temp_dir

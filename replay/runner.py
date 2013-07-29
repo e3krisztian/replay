@@ -41,13 +41,6 @@ class Runner(object):
     def virtualenv_dir(self):
         return self.context.virtualenv_parent_dir / self.virtualenv_name
 
-    def check_inputs(self):
-        datastore = self.context.datastore
-        for input_spec in self.script.inputs:
-            ds_file, = input_spec.values()
-            if not (datastore / ds_file).is_file():
-                raise exceptions.MissingInput(ds_file)
-
     def run_in_virtualenv(self, cmdspec):
         venv_bin = (self.virtualenv_dir / 'bin').path
         path = venv_bin + os.pathsep + os.environ.get('PATH', '')
