@@ -135,13 +135,46 @@ class Test_Runner_run(unittest.TestCase):
 
 class Test_Runner_virtualenv_name(unittest.TestCase):
 
-    @TODO
-    def test_virtualenv_name_of_scripts_without_required_packages(self):
-        pass
+    def test_empty_virtualenv_name(self):
+        f = fixtures.Runner('{}')
+        self.assertEqual(
+            '_replay_d41d8cd98f00b204e9800998ecf8427e',
+            f.runner.virtualenv_name)
 
-    @TODO
     def test_virtualenv_name_depends_on_required_python_packages(self):
-        pass
+        f = fixtures.Runner(
+            '''\
+            python dependencies:
+                - a
+                - roman==2.0.0
+                - pi>=3.14
+            ''')
+        self.assertEqual(
+            '_replay_2adb1850a8104639a1cfee83c5c3d5d5',
+            f.runner.virtualenv_name)
+
+    def test_python_package_order_does_not_matter(self):
+        f1 = fixtures.Runner(
+            '''\
+            python dependencies:
+                - a
+                - roman==2.0.0
+                - pi>=3.14
+            ''')
+        f2 = fixtures.Runner(
+            '''\
+            python dependencies:
+                - pi>=3.14
+                - roman==2.0.0
+                - a
+            ''')
+
+        self.assertEqual(
+            f1.runner.virtualenv_name,
+            f2.runner.virtualenv_name)
+        self.assertEqual(
+            '_replay_2adb1850a8104639a1cfee83c5c3d5d5',
+            f1.runner.virtualenv_name)
 
 
 # refactor Runner - add plugin interface & move actions into plugins

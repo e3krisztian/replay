@@ -4,6 +4,7 @@ from externals import fspath
 from replay import exceptions
 import external_process
 from replay import plugins
+import hashlib
 
 
 class Context(object):
@@ -39,14 +40,19 @@ class Runner(object):
     def __init__(self, context, script, script_name):
         self.context = context
         self.script = script
-        self.virtualenv_name = '_replay_venv'
         if not RE_SCRIPT_NAME.match(script_name):
             raise exceptions.InvalidScriptName(script_name)
         self.script_name = script_name
+        self.virtualenv_name = '_replay_' + self._package_hash()
+        self.virtualenv_dir = (
+            self.context.virtualenv_parent_dir / self.virtualenv_name)
 
-    @property
-    def virtualenv_dir(self):
-        return self.context.virtualenv_parent_dir / self.virtualenv_name
+    def _package_hash(self):
+        hasher = hashlib.md5()
+        for dep in sorted(self.script.python_dependencies):
+            hasher.update(dep)
+            hasher.update('\n')
+        return hasher.hexdigest()
 
     def run_in_virtualenv(self, cmdspec):
         venv_bin = (self.virtualenv_dir / 'bin').path
