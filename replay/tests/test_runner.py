@@ -186,5 +186,3 @@ class Test_Runner_virtualenv_name(unittest.TestCase):
 #   - before_execute of another plugin
 #   - while running the executable
 #   - in an after_execute action
-# - the executable is not run if there is an exception in a plugin's .before_execute
-# - after_execute is run only for those plugins whose before_execute action was run

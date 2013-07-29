@@ -20,5 +20,5 @@ class ScriptError(Exception):
 
 class InvalidScriptName(Exception):
 
-    '''Scripts names can contain alphabetic characters, numbers, and underscores, \
-    the first character must be alphabetic'''
+    '''Scripts names can contain alphabetic characters, numbers, \
+    and underscores, the first character must be alphabetic'''

@@ -22,7 +22,7 @@ setup(
 
     install_requires=requirements_txt,
     dependency_links=[
-        'https://github.com/krisztianfekete/externals/tarball/master#egg=externals-0.0dev'],
+        'https://github.com/krisztianfekete/externals/tarball/master#egg=externals-0.1'],
 
     provides=['replay ({version})'.format(version=VERSION)],
 
