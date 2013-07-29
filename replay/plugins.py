@@ -5,7 +5,8 @@ from replay import exceptions
 
 class Plugin(object):
 
-    '''I can perform setup tasks and also provide cleanup for Runner
+    '''I am a context manager, I can perform setup tasks \
+    and also provide cleanup for Runner
 
     My operation is usually driven by runner.context & runner.script
     '''
@@ -13,10 +14,10 @@ class Plugin(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def before_execute(self):
+    def __enter__(self):
         pass
 
-    def after_execute(self):
+    def __exit__(self, exc_type, exc_value, traceback):
         pass
 
 
@@ -31,13 +32,13 @@ class WorkingDirectory(Plugin):
         self.context = runner.context
         self.original_working_directory = '.'
 
-    def before_execute(self):
+    def __enter__(self):
         working_directory = self.context.working_directory.path
         os.mkdir(working_directory)
         self.original_working_directory = os.getcwd()
         os.chdir(working_directory)
 
-    def after_execute(self):
+    def __exit__(self, exc_type, exc_value, traceback):
         try:
             os.chdir(self.original_working_directory)
         finally:
@@ -49,11 +50,11 @@ class DataStore(Plugin):
     '''I ensure that inputs are available from DataStore and outputs are saved.
     '''
 
-    def before_execute(self):
+    def __enter__(self):
         self._check_inputs()
         self._download_inputs()
 
-    def after_execute(self):
+    def __exit__(self, exc_type, exc_value, traceback):
         self._check_outputs()
         self._upload_outputs()
 

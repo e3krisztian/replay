@@ -81,13 +81,7 @@ class Runner(object):
                 raise exceptions.ScriptError(result)
 
     def run(self):
-        wdp = plugins.WorkingDirectory(self)
-        wdp.before_execute()
+        with plugins.WorkingDirectory(self):
+            with plugins.DataStore(self):
 
-        dsp = plugins.DataStore(self)
-        dsp.before_execute()
-
-        self._run_executable()
-
-        dsp.after_execute()
-        wdp.after_execute()
+                self._run_executable()
