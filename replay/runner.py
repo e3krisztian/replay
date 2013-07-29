@@ -10,7 +10,7 @@ class Context(object):
     datastore = None  # External
     virtualenv_parent_dir = str
     index_server_url = str
-    working_directory = str  # low level path, NOT an External!
+    working_directory = None  # External
 
     def __init__(
             self,
@@ -25,7 +25,7 @@ class Context(object):
         else:
             self.virtualenv_parent_dir = wd / '.virtualenvs'
         self.index_server_url = index_server_url
-        self.working_directory = working_directory or (wd / 'temp').path
+        self.working_directory = working_directory or (wd / 'temp')
 
 
 class Runner(object):

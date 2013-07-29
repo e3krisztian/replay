@@ -26,7 +26,7 @@ class Test_Context(unittest.TestCase):
     def test_working_directory_defaults_to_temp_in_current_directory(self):
         self.assertEqual(
             (working_directory() / 'temp').path,
-            m.Context().working_directory)
+            m.Context().working_directory.path)
 
 
 class RunnerFixture(object):
@@ -186,7 +186,7 @@ class Test_Runner_run(unittest.TestCase):
         f.runner.run()
 
         self.assertEqual(
-            os.path.normpath(f.context.working_directory),
+            os.path.normpath(f.context.working_directory.path),
             os.path.normpath(f.datastore.content))
 
     @within_temp_dir

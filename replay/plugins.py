@@ -26,7 +26,7 @@ class WorkingDirectory(Plugin):
         self.original_working_directory = '.'
 
     def before_execute(self, runner):
-        working_directory = runner.context.working_directory
+        working_directory = runner.context.working_directory.path
         os.mkdir(working_directory)
         self.original_working_directory = os.getcwd()
         os.chdir(working_directory)
@@ -35,4 +35,4 @@ class WorkingDirectory(Plugin):
         try:
             os.chdir(self.original_working_directory)
         finally:
-            shutil.rmtree(runner.context.working_directory)
+            shutil.rmtree(runner.context.working_directory.path)
