@@ -144,51 +144,6 @@ class Test_Runner_virtualenv_name(unittest.TestCase):
         pass
 
 
-class Test_Runner_script_options(unittest.TestCase):
-
-    @TODO
-    def test_uses_psql_adds_setup_action(self):
-        pass
-
-    @TODO
-    def test_uses_psql_adds_cleanup_action(self):
-        pass
-
-    @TODO
-    def test_keep_database_no_cleanup_action_is_added(self):
-        pass
-
-
-class Test_setup_psql(unittest.TestCase):
-
-    # @skip_if_not_safe_to_drop_db
-    # # - to prevent dropping a user's database by accident
-    @TODO
-    def test_env_REPLAY_DROP_DB_missing_is_an_error(self):
-        pass
-
-    # @skip_if_not_safe_to_drop_db
-    # # - to prevent dropping a user's database by accident
-    @TODO
-    def test_env_REPLAY_DROP_DB_present_user_database_recreated(self):
-        pass
-
-
-class Test_cleanup_psql(unittest.TestCase):
-
-    # @skip_if_not_safe_to_drop_db
-    # # - to prevent dropping a user's database by accident
-    @TODO
-    def test_env_REPLAY_DROP_DB_missing_is_an_error(self):
-        pass
-
-    # @skip_if_not_safe_to_drop_db
-    # # - to prevent dropping a user's database by accident
-    @TODO
-    def test_env_REPLAY_DROP_DB_present_user_database_dropped(self):
-        pass
-
-
 # refactor Runner - add plugin interface & move actions into plugins
 #
 # REQ:

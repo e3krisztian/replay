@@ -2,6 +2,8 @@ import external_process
 import shutil
 import os
 from replay import exceptions
+import getpass
+import datetime
 
 
 class Plugin(object):
@@ -20,6 +22,9 @@ class Plugin(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         pass
+
+    def has_option(self, option):
+        return self.runner.script.has_option(option)
 
 
 class WorkingDirectory(Plugin):
@@ -131,3 +136,47 @@ class VirtualEnv(Plugin):
         python_dependencies = self.runner.script.python_dependencies
         for package_spec in python_dependencies:
             self._install_package(package_spec, self.index_server_url)
+
+
+class _EnvironKeyState(object):
+
+    def __init__(self, environ, key):
+        self.key = key
+        self.missing = key not in environ
+        self.value = environ.get(key)
+
+    def restore(self, environ):
+        key = self.key
+        if self.missing:
+            if key in environ:
+                del environ[key]
+        else:
+            environ[key] = self.value
+
+
+class Postgres(Plugin):
+
+    def __init__(self, runner):
+        super(Postgres, self).__init__(runner)
+        self.timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
+        self.enabled = self.has_option('uses psql')
+        self.keep_database = (
+            self.has_option('debug') and self.has_option('keep database'))
+        self.PGDATABASE = _EnvironKeyState(os.environ, 'PGDATABASE')
+
+    @property
+    def database(self):
+        return '{user}_{script_name}_{timestamp}'.format(
+            script_name=self.runner.script_name,
+            user=getpass.getuser(),
+            timestamp=self.timestamp)
+
+    def __enter__(self):
+        if self.enabled:
+            os.environ['PGDATABASE'] = self.database
+            external_process.run(['createdb', self.database])
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.PGDATABASE.restore(os.environ)
+        if not self.keep_database:
+            external_process.run(['dropdb', self.database])
