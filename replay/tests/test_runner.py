@@ -1,6 +1,7 @@
 import unittest
 TODO = unittest.skip('not implemented yet')
 from replay import external_process
+from replay import plugins
 import replay.runner as m
 from replay.tests import fixtures
 
@@ -24,64 +25,6 @@ class Test_Context(unittest.TestCase):
             m.Context().working_directory.path)
 
 
-class Test_Runner_make_virtualenv(unittest.TestCase):
-
-    @within_temp_dir
-    def test_virtualenv_is_created_in_context_specified_dir(self):
-        f = fixtures.Runner(
-            '''\
-            python dependencies:
-            ''')
-        virtualenv_parent_dir = f.context.virtualenv_parent_dir
-
-        f.runner.make_virtualenv()
-
-        virtualenv_dir = virtualenv_parent_dir / f.runner.virtualenv_name
-        self.assertTrue(virtualenv_dir.is_dir())
-
-    @within_temp_dir
-    def test_virtualenv_already_exists_no_error(self):
-        f = fixtures.Runner(
-            '''\
-            python dependencies:
-            ''')
-        virtualenv_parent_dir = f.context.virtualenv_parent_dir
-
-        f.runner.make_virtualenv()
-        f.runner.make_virtualenv()
-
-        virtualenv_dir = virtualenv_parent_dir / f.runner.virtualenv_name
-        self.assertTrue(virtualenv_dir.is_dir())
-
-    @within_temp_dir
-    def test_new_virtualenv_has_all_the_required_packages(self):
-        f = fixtures.Runner(
-            '''\
-            python dependencies:
-                - roman==2.0.0
-            ''')
-        f.runner.make_virtualenv()
-
-        # verify, that we can import the required "roman" module
-        python = f.runner.virtualenv_dir / 'bin/python'
-        program = 'import roman; print(roman.toRoman(23))'
-        cmdspec = [python.path, '-c', program]
-        result = external_process.run(cmdspec)
-
-        # if result.status: print(result)
-        self.assertEqual('XXIII', result.stdout.rstrip())
-
-    @within_temp_dir
-    def test_required_package_not_installed_is_an_error(self):
-        f = fixtures.Runner(
-            '''\
-            python dependencies:
-                - remedy_for_all_problems==0.42.0
-            ''')
-        with self.assertRaises(exceptions.MissingPythonDependency):
-            f.runner.make_virtualenv()
-
-
 class Test_Runner_run_in_virtualenv(unittest.TestCase):
 
     @within_temp_dir
@@ -91,12 +34,13 @@ class Test_Runner_run_in_virtualenv(unittest.TestCase):
             python dependencies:
                 - roman==2.0.0
             ''')
-        f.runner.make_virtualenv()
 
         # verify, that we can import the required "roman" module
         cmdspec = [
             'python', '-c', 'import roman; print(roman.toRoman(23))']
-        result = f.runner.run_in_virtualenv(cmdspec)
+
+        with plugins.VirtualEnv(f.runner):
+            result = f.runner.run_in_virtualenv(cmdspec)
 
         # if result.status: print(result)
         self.assertEqual('XXIII', result.stdout.rstrip())

@@ -47,31 +47,8 @@ class Runner(object):
         env = dict(os.environ, PATH=path)
         return external_process.run(cmdspec, env=env)
 
-    def install_package(self, package_spec, index_server_url):
-        cmdspec = (
-            ['pip', 'install']
-            + (['--index-url=' + index_server_url] if index_server_url else [])
-            + [package_spec])
-        result = self.run_in_virtualenv(cmdspec)
-        if result.status != 0:
-            raise exceptions.MissingPythonDependency(result)
-
-    def make_virtualenv(self):
-        # potential enhancements:
-        #  - clean environment from behavior changing settings
-        #    (e.g. PYTHON_VIRTUALENV)
-        #  - specify python interpreter to use (python 2 / 3 / pypy / ...)
-        if self.virtualenv_dir.is_dir():
-            return
-
-        external_process.run(['virtualenv', self.virtualenv_dir.path])
-        for package_spec in self.script.python_dependencies:
-            self.install_package(package_spec, self.context.index_server_url)
-
     def _run_executable(self):
         if self.script.executable_name:
-            self.make_virtualenv()
-
             executable_script = os.path.join(
                 self.script.dir,
                 self.script.executable_name)
@@ -83,5 +60,5 @@ class Runner(object):
     def run(self):
         with plugins.WorkingDirectory(self):
             with plugins.DataStore(self):
-
-                self._run_executable()
+                with plugins.VirtualEnv(self):
+                    self._run_executable()

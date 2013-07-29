@@ -1,3 +1,4 @@
+import external_process
 import shutil
 import os
 from replay import exceptions
@@ -90,3 +91,43 @@ class DataStore(Plugin):
     def _upload_outputs(self):
         for local, datastore in self._output_file_pairs():
             local.copy_to(datastore)
+
+
+class VirtualEnv(Plugin):
+
+    def __enter__(self):
+        if not self.virtualenv_dir.exists():
+            self._make_virtualenv()
+
+    @property
+    def virtualenv_dir(self):
+        return self.runner.virtualenv_dir
+
+    def run_in_virtualenv(self, cmdspec):
+        return self.runner.run_in_virtualenv(cmdspec)
+
+    @property
+    def index_server_url(self):
+        return self.runner.context.index_server_url
+
+    def _install_package(self, package_spec, index_server_url):
+        cmdspec = (
+            ['pip', 'install']
+            + (['--index-url=' + index_server_url] if index_server_url else [])
+            + [package_spec])
+        result = self.run_in_virtualenv(cmdspec)
+        if result.status != 0:
+            raise exceptions.MissingPythonDependency(result)
+
+    def _make_virtualenv(self):
+        # potential enhancements:
+        #  - clean environment from behavior changing settings
+        #    (e.g. PYTHON_VIRTUALENV)
+        #  - specify python interpreter to use (python 2 / 3 / pypy / ...)
+        if self.virtualenv_dir.is_dir():
+            return
+
+        external_process.run(['virtualenv', self.virtualenv_dir.path])
+        python_dependencies = self.runner.script.python_dependencies
+        for package_spec in python_dependencies:
+            self._install_package(package_spec, self.index_server_url)
