@@ -16,10 +16,10 @@ class TestDataStore(unittest.TestCase):
                 - missing: missing
             ''')
 
-        plugin = plugins.DataStore()
+        plugin = plugins.DataStore(f.runner)
 
         with self.assertRaises(exceptions.MissingInput):
-            plugin.before_execute(f.runner)
+            plugin.before_execute()
 
     @within_temp_dir
     def test_outputs_are_uploaded_to_datastore(self):
@@ -30,8 +30,8 @@ class TestDataStore(unittest.TestCase):
             ''')
         (f.context.working_directory / 'an output file').content = 'data'
 
-        plugin = plugins.DataStore()
-        plugin.after_execute(f.runner)
+        plugin = plugins.DataStore(f.runner)
+        plugin.after_execute()
 
         self.assertEqual(
             'data',
@@ -45,7 +45,7 @@ class TestDataStore(unittest.TestCase):
                 - missing: missing
             ''')
 
-        plugin = plugins.DataStore()
+        plugin = plugins.DataStore(f.runner)
 
         with self.assertRaises(exceptions.MissingOutput):
-            plugin.after_execute(f.runner)
+            plugin.after_execute()

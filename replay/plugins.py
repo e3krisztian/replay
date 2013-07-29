@@ -10,10 +10,13 @@ class Plugin(object):
     My operation is usually driven by runner.context & runner.script
     '''
 
-    def before_execute(self, runner):
+    def __init__(self, runner):
+        self.runner = runner
+
+    def before_execute(self):
         pass
 
-    def after_execute(self, runner):
+    def after_execute(self):
         pass
 
 
@@ -23,20 +26,22 @@ class WorkingDirectory(Plugin):
     and also clean up after them.
     '''
 
-    def __init__(self):
+    def __init__(self, runner):
+        super(WorkingDirectory, self).__init__(runner)
+        self.context = runner.context
         self.original_working_directory = '.'
 
-    def before_execute(self, runner):
-        working_directory = runner.context.working_directory.path
+    def before_execute(self):
+        working_directory = self.context.working_directory.path
         os.mkdir(working_directory)
         self.original_working_directory = os.getcwd()
         os.chdir(working_directory)
 
-    def after_execute(self, runner):
+    def after_execute(self):
         try:
             os.chdir(self.original_working_directory)
         finally:
-            shutil.rmtree(runner.context.working_directory.path)
+            shutil.rmtree(self.context.working_directory.path)
 
 
 class DataStore(Plugin):
@@ -44,42 +49,43 @@ class DataStore(Plugin):
     '''I ensure that inputs are available from DataStore and outputs are saved.
     '''
 
-    def before_execute(self, runner):
-        self._check_inputs(runner)
-        self._download_inputs(runner)
+    def before_execute(self):
+        self._check_inputs()
+        self._download_inputs()
 
-    def after_execute(self, runner):
-        self._check_outputs(runner)
-        self._upload_outputs(runner)
+    def after_execute(self):
+        self._check_outputs()
+        self._upload_outputs()
 
-    def _file_pairs(self, runner, copy_spec):
-        datastore = runner.context.datastore
-        working_directory = runner.context.working_directory
+    # helpers
+    def _file_pairs(self, copy_spec):
+        datastore = self.runner.context.datastore
+        working_directory = self.runner.context.working_directory
 
         for spec in copy_spec:
             for local_file, ds_file in spec.iteritems():
-                yield working_directory / local_file, datastore / ds_file
+                yield (working_directory / local_file), (datastore / ds_file)
 
-    def _input_file_pairs(self, runner):
-        return self._file_pairs(runner, runner.script.inputs)
+    def _input_file_pairs(self):
+        return self._file_pairs(self.runner.script.inputs)
 
-    def _output_file_pairs(self, runner):
-        return self._file_pairs(runner, runner.script.outputs)
+    def _output_file_pairs(self):
+        return self._file_pairs(self.runner.script.outputs)
 
-    def _check_inputs(self, runner):
-        for local, datastore in self._input_file_pairs(runner):
+    def _check_inputs(self):
+        for local, datastore in self._input_file_pairs():
             if not datastore.exists():
                 raise exceptions.MissingInput(datastore)
 
-    def _check_outputs(self, runner):
-        for local, datastore in self._output_file_pairs(runner):
+    def _check_outputs(self):
+        for local, datastore in self._output_file_pairs():
             if not local.exists():
                 raise exceptions.MissingOutput(local)
 
-    def _download_inputs(self, runner):
-        for local, datastore in self._input_file_pairs(runner):
+    def _download_inputs(self):
+        for local, datastore in self._input_file_pairs():
             datastore.copy_to(local)
 
-    def _upload_outputs(self, runner):
-        for local, datastore in self._output_file_pairs(runner):
+    def _upload_outputs(self):
+        for local, datastore in self._output_file_pairs():
             local.copy_to(datastore)
