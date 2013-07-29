@@ -1,17 +1,12 @@
 import unittest
 TODO = unittest.skip('not implemented yet')
-from replay.tests.script import script_from
-from replay.tests.path2url import path2url
 from replay import external_process
 import replay.runner as m
+from replay.tests import fixtures
 
 import os.path
 from replay import exceptions
-from externals.fake import Fake as MemoryStore
-from externals.fspath import working_directory
 from temp_dir import within_temp_dir
-
-import pkg_resources
 
 
 class Test_Context(unittest.TestCase):
@@ -25,37 +20,14 @@ class Test_Context(unittest.TestCase):
 
     def test_working_directory_defaults_to_temp_in_current_directory(self):
         self.assertEqual(
-            (working_directory() / 'temp').path,
+            os.path.join(os.getcwd(), 'temp'),
             m.Context().working_directory.path)
-
-
-class RunnerFixture(object):
-
-    def __init__(self, script):
-        venv_parent_dir = working_directory() / 'replay_virtualenvs'
-
-        self.datastore = MemoryStore()
-        self.context = m.Context(
-            self.datastore,
-            venv_parent_dir,
-            self._local_pypi_url)
-        self.script = script_from(script)
-        self.runner = m.Runner(self.context, self.script)
-
-    @property
-    def _local_pypi_url(self):
-        index_server_dir = pkg_resources.resource_filename(
-            'replay', 'tests/fixtures/pypi/simple')
-        assert os.path.isdir(index_server_dir), index_server_dir
-        index_server_url = path2url(index_server_dir)
-
-        return index_server_url
 
 
 class Test_Runner_check_inputs(unittest.TestCase):
 
     def test_input_file_missing_is_error(self):
-        f = RunnerFixture(
+        f = fixtures.Runner(
             '''\
             inputs:
                 - missing: missing
@@ -65,7 +37,7 @@ class Test_Runner_check_inputs(unittest.TestCase):
             f.runner.check_inputs()
 
     def test_inputs_are_there_proceeds(self):
-        f = RunnerFixture(
+        f = fixtures.Runner(
             '''\
             inputs:
                 - existing: somewhere/existing file
@@ -79,7 +51,7 @@ class Test_Runner_make_virtualenv(unittest.TestCase):
 
     @within_temp_dir
     def test_virtualenv_is_created_in_context_specified_dir(self):
-        f = RunnerFixture(
+        f = fixtures.Runner(
             '''\
             python dependencies:
             ''')
@@ -92,7 +64,7 @@ class Test_Runner_make_virtualenv(unittest.TestCase):
 
     @within_temp_dir
     def test_virtualenv_already_exists_no_error(self):
-        f = RunnerFixture(
+        f = fixtures.Runner(
             '''\
             python dependencies:
             ''')
@@ -106,7 +78,7 @@ class Test_Runner_make_virtualenv(unittest.TestCase):
 
     @within_temp_dir
     def test_new_virtualenv_has_all_the_required_packages(self):
-        f = RunnerFixture(
+        f = fixtures.Runner(
             '''\
             python dependencies:
                 - roman==2.0.0
@@ -124,7 +96,7 @@ class Test_Runner_make_virtualenv(unittest.TestCase):
 
     @within_temp_dir
     def test_required_package_not_installed_is_an_error(self):
-        f = RunnerFixture(
+        f = fixtures.Runner(
             '''\
             python dependencies:
                 - remedy_for_all_problems==0.42.0
@@ -137,7 +109,7 @@ class Test_Runner_run_in_virtualenv(unittest.TestCase):
 
     @within_temp_dir
     def test_module_in_virtualenv_is_available(self):
-        f = RunnerFixture(
+        f = fixtures.Runner(
             '''\
             python dependencies:
                 - roman==2.0.0
@@ -153,29 +125,11 @@ class Test_Runner_run_in_virtualenv(unittest.TestCase):
         self.assertEqual('XXIII', result.stdout.rstrip())
 
 
-class Test_Runner_upload_results(unittest.TestCase):
-
-    @within_temp_dir
-    def test_outputs_are_uploaded_to_datastore(self):
-        f = RunnerFixture(
-            '''\
-            outputs:
-                - an output file: /output/datastore/path
-            ''')
-
-        (working_directory() / 'an output file').content = 'data'
-        f.runner.upload_outputs()
-
-        self.assertEqual(
-            'data',
-            (f.datastore / 'output/datastore/path').content)
-
-
 class Test_Runner_run(unittest.TestCase):
 
     @within_temp_dir
     def test_script_is_run_in_context_specified_directory(self):
-        f = RunnerFixture(
+        f = fixtures.Runner(
             '''\
             outputs:
                 - working_directory : /
@@ -191,7 +145,7 @@ class Test_Runner_run(unittest.TestCase):
 
     @within_temp_dir
     def test_nonzero_exit_status_is_an_error(self):
-        f = RunnerFixture(
+        f = fixtures.Runner(
             '''\
             script: scripts/this_script_does_not_exist_should_cause_an_error.py
             ''')
@@ -201,7 +155,7 @@ class Test_Runner_run(unittest.TestCase):
 
     @within_temp_dir
     def test_script_dependencies_are_available(self):
-        f = RunnerFixture(
+        f = fixtures.Runner(
             '''\
             python dependencies:
                 - roman==2.0.0
@@ -213,7 +167,7 @@ class Test_Runner_run(unittest.TestCase):
 
     @within_temp_dir
     def test_input_files_are_available_to_script(self):
-        f = RunnerFixture(
+        f = fixtures.Runner(
             '''\
             inputs:
                 - file1: data1
@@ -229,7 +183,7 @@ class Test_Runner_run(unittest.TestCase):
 
     @within_temp_dir
     def test_generated_output_files_are_uploaded_to_datastore(self):
-        f = RunnerFixture(
+        f = fixtures.Runner(
             '''\
             inputs:
                 - file: data

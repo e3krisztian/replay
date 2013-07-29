@@ -75,20 +75,6 @@ class Runner(object):
         for package_spec in self.script.python_dependencies:
             self.install_package(package_spec, self.context.index_server_url)
 
-    def upload_outputs(self):
-        datastore = self.context.datastore
-        working_directory = fspath.working_directory()
-        for output_spec in self.script.outputs:
-            for local_file, ds_file in output_spec.iteritems():
-                (working_directory / local_file).copy_to(datastore / ds_file)
-
-    def download_inputs(self):
-        datastore = self.context.datastore
-        working_directory = fspath.working_directory()
-        for input_spec in self.script.inputs:
-            for local_file, ds_file in input_spec.iteritems():
-                (datastore / ds_file).copy_to(working_directory / local_file)
-
     def _run_executable(self):
         if self.script.executable_name:
             self.make_virtualenv()
@@ -104,7 +90,11 @@ class Runner(object):
     def run(self):
         wdp = plugins.WorkingDirectory()
         wdp.before_execute(self)
-        self.download_inputs()
+
+        dsp = plugins.DataStore()
+        dsp.before_execute(self)
+
         self._run_executable()
-        self.upload_outputs()
+
+        dsp.after_execute(self)
         wdp.after_execute(self)

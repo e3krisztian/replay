@@ -36,3 +36,25 @@ class WorkingDirectory(Plugin):
             os.chdir(self.original_working_directory)
         finally:
             shutil.rmtree(runner.context.working_directory.path)
+
+
+class DataStore(Plugin):
+
+    '''I ensure that inputs are available from DataStore and outputs are saved.
+    '''
+
+    def before_execute(self, runner):
+        datastore = runner.context.datastore
+        working_directory = runner.context.working_directory
+
+        for input_spec in runner.script.inputs:
+            for local_file, ds_file in input_spec.iteritems():
+                (datastore / ds_file).copy_to(working_directory / local_file)
+
+    def after_execute(self, runner):
+        datastore = runner.context.datastore
+        working_directory = runner.context.working_directory
+
+        for output_spec in runner.script.outputs:
+            for local_file, ds_file in output_spec.iteritems():
+                (working_directory / local_file).copy_to(datastore / ds_file)
