@@ -3,7 +3,7 @@ TODO = unittest.skip('not implemented yet')
 from replay.tests.script import script_from
 from replay.tests.path2url import path2url
 from replay import external_process
-import replay.run as m
+import replay.runner as m
 
 import os.path
 from replay import exceptions
