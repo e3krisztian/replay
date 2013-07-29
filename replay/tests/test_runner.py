@@ -1,9 +1,10 @@
 import unittest
 TODO = unittest.skip('not implemented yet')
-from replay import external_process
 from replay import plugins
 import replay.runner as m
+
 from replay.tests import fixtures
+from replay.tests.script import script_from
 
 import os.path
 from replay import exceptions
@@ -23,6 +24,16 @@ class Test_Context(unittest.TestCase):
         self.assertEqual(
             os.path.join(os.getcwd(), 'temp'),
             m.Context().working_directory.path)
+
+
+class Test_Runner(unittest.TestCase):
+
+    def test_minimal_construction(self):
+        m.Runner(m.Context(), script_from('{}'), 'minimal')
+
+    def test_invalid_script_name(self):
+        with self.assertRaises(exceptions.InvalidScriptName):
+            m.Runner(m.Context(), script_from('{}'), 'm inimal')
 
 
 class Test_Runner_run_in_virtualenv(unittest.TestCase):
@@ -189,21 +200,3 @@ class Test_cleanup_psql(unittest.TestCase):
 #   - in an after_execute action
 # - the executable is not run if there is an exception in a plugin's .before_execute
 # - after_execute is run only for those plugins whose before_execute action was run
-
-
-# plugins:
-#   working directory:  (temporary? ramdisk? how to configure? - runner.context.script_working_directory)
-#       before_execute: create & enter script working directory
-#       after_execute: restore directory, remove script working directory
-#   datastore:  (runner.context.datastore)
-#       before_execute: copy inputs from datastore
-#       after_execute: copy outputs to datastore
-#   virtualenv:
-#       before_execute: if not already exists create new virtualenv & install requirements
-#       after_execute: NOOP
-#   postgresql:  (database name {USER}_{script_name}_{datetime})
-#       before_execute: create database
-#       after_execute: drop database (unless debugging & explicitly requested)
-#     NOTE:
-#           runner should store script_name
-#           should tests be configurable to run/not run database tests?

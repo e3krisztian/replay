@@ -1,4 +1,5 @@
 import os
+import re
 from externals import fspath
 from replay import exceptions
 import external_process
@@ -28,14 +29,20 @@ class Context(object):
         self.working_directory = working_directory or (wd / 'temp')
 
 
+RE_SCRIPT_NAME = re.compile('^[a-z][a-z0-9_]*$', re.IGNORECASE)
+
+
 class Runner(object):
 
     '''I run scripts in isolation'''
 
-    def __init__(self, context, script):
+    def __init__(self, context, script, script_name):
         self.context = context
         self.script = script
         self.virtualenv_name = '_replay_venv'
+        if not RE_SCRIPT_NAME.match(script_name):
+            raise exceptions.InvalidScriptName(script_name)
+        self.script_name = script_name
 
     @property
     def virtualenv_dir(self):

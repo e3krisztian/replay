@@ -110,3 +110,22 @@ class TestVirtualEnv(unittest.TestCase):
         with self.assertRaises(exceptions.MissingPythonDependency):
             with plugins.VirtualEnv(f.runner):
                 pass
+
+
+#   postgresql:  (database name {USER}_{script_name}_{datetime})
+#       before_execute: create database
+#       after_execute: drop database (unless debugging & explicitly requested)
+#     NOTE:
+#           runner should store script_name
+#           should tests be configurable to run/not run database tests?
+
+
+# extend Runner with script_name
+# database name of the Postgres plugin is determined by user_name, runner.script_name, datetime
+#    user_name: getpass.getuser()
+#    check: enter two Postgres blocks, they should have different database names!
+# within Postgres() block psql connects to the database of the Postgres plugin
+# class TestPostgres(unittest.TestCase):
+
+#     def test_database_name(self):
+#         pass
