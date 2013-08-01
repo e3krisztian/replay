@@ -24,6 +24,8 @@ setup(
     dependency_links=[
         'https://github.com/krisztianfekete/externals/tarball/master#egg=externals-0.1'],
 
+    tests_require=['mock'],
+
     provides=['replay ({version})'.format(version=VERSION)],
 
     entry_points={
