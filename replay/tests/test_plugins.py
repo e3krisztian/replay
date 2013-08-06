@@ -1,14 +1,15 @@
 import unittest
 TODO = unittest.skip('not implemented yet')
+
 from temp_dir import within_temp_dir
+import getpass
+import os
+
 from replay.tests import fixtures
 
 from replay import external_process
-
 from replay import plugins
 from replay import exceptions
-import getpass
-import os
 
 
 class TestDataStore(unittest.TestCase):
