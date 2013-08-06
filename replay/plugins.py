@@ -1,3 +1,4 @@
+import abc
 import external_process
 import shutil
 import os
@@ -14,10 +15,13 @@ class Plugin(object):
     My operation is usually driven by runner.context & runner.script
     '''
 
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, runner):
         self.runner = runner
 
-    def __enter__(self):
+    @abc.abstractmethod
+    def __enter__(self):  # pragma: nocover
         pass
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -129,9 +133,6 @@ class VirtualEnv(Plugin):
         #  - clean environment from behavior changing settings
         #    (e.g. PYTHON_VIRTUALENV)
         #  - specify python interpreter to use (python 2 / 3 / pypy / ...)
-        if self.virtualenv_dir.is_dir():
-            return
-
         external_process.run(['virtualenv', self.virtualenv_dir.path])
         python_dependencies = self.runner.script.python_dependencies
         for package_spec in python_dependencies:

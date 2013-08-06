@@ -22,8 +22,7 @@ class TestDataStore(unittest.TestCase):
             ''')
 
         with self.assertRaises(exceptions.MissingInput):
-            with plugins.DataStore(f.runner):
-                pass
+            plugins.DataStore(f.runner).__enter__()
 
     @within_temp_dir
     def test_outputs_are_uploaded_to_datastore(self):
@@ -111,8 +110,7 @@ class TestVirtualEnv(unittest.TestCase):
                 - remedy_for_all_problems==0.42.0
             ''')
         with self.assertRaises(exceptions.MissingPythonDependency):
-            with plugins.VirtualEnv(f.runner):
-                pass
+            plugins.VirtualEnv(f.runner).__enter__()
 
 
 #   postgresql:  (database name {USER}_{script_name}_{datetime})
