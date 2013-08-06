@@ -1,6 +1,5 @@
 import os
 import re
-from externals import fspath
 from replay import exceptions
 import external_process
 from replay import plugins
@@ -16,18 +15,14 @@ class Context(object):
 
     def __init__(
             self,
-            datastore=None,
-            virtualenv_parent_dir=None,
-            index_server_url=None,
-            working_directory=None):
-        wd = fspath.working_directory()
-        self.datastore = datastore or wd
-        if virtualenv_parent_dir:
-            self.virtualenv_parent_dir = virtualenv_parent_dir
-        else:
-            self.virtualenv_parent_dir = wd / '.virtualenvs'
+            datastore,
+            virtualenv_parent_dir,
+            working_directory,
+            index_server_url=None):
+        self.datastore = datastore
+        self.virtualenv_parent_dir = virtualenv_parent_dir
+        self.working_directory = working_directory
         self.index_server_url = index_server_url
-        self.working_directory = working_directory or (wd / 'temp')
 
 
 RE_SCRIPT_NAME = re.compile('^[a-z][a-z0-9_]*$', re.IGNORECASE)

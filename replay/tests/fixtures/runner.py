@@ -20,6 +20,7 @@ class Runner(object):
         self.context = runner.Context(
             self.datastore,
             venv_parent_dir,
+            working_directory() / 'temp',
             self._local_pypi_url)
         self.script = script_from(script)
         self.runner = runner.Runner(self.context, self.script, 'test_script')

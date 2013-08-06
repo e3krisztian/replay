@@ -9,31 +9,23 @@ from replay.tests.script import script_from
 import os.path
 from replay import exceptions
 from temp_dir import within_temp_dir
-
-
-class Test_Context(unittest.TestCase):
-
-    def test_datastore_defaults_to_current_working_directory(self):
-        self.assertEqual(os.getcwd(), m.Context().datastore.path)
-
-    def test_virtualenv_parent_dir_defaults_to_dot_virtualenvs(self):
-        default = os.path.join(os.getcwd(), '.virtualenvs')
-        self.assertEqual(default, m.Context().virtualenv_parent_dir.path)
-
-    def test_working_directory_defaults_to_temp_in_current_directory(self):
-        self.assertEqual(
-            os.path.join(os.getcwd(), 'temp'),
-            m.Context().working_directory.path)
+from externals import fspath
+from externals.fake import Fake as MemoryStore
 
 
 class Test_Runner(unittest.TestCase):
 
     def test_minimal_construction(self):
-        m.Runner(m.Context(), script_from('{}'), 'minimal')
+        context = m.Context(
+            MemoryStore(),
+            fspath.working_directory() / '.virtualenvs',
+            fspath.working_directory() / 'temp')
+        m.Runner(context, script_from('{}'), 'minimal')
 
     def test_invalid_script_name(self):
         with self.assertRaises(exceptions.InvalidScriptName):
-            m.Runner(m.Context(), script_from('{}'), 'm inimal')
+            context = None
+            m.Runner(context, script_from('{}'), 'm inimal')
 
 
 class Test_Runner_run_in_virtualenv(unittest.TestCase):
