@@ -30,7 +30,7 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'replay=replay.run:main'
+            'replay=replay.main:main'
             ],
         }
     )
