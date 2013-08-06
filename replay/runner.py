@@ -62,8 +62,10 @@ class Runner(object):
             if result.status != 0:
                 raise exceptions.ScriptError(result)
 
-    def run(self):
-        with plugins.WorkingDirectory(self):
-            with plugins.DataStore(self):
-                with plugins.VirtualEnv(self):
-                    self._run_executable()
+    def run_with(self, setup_plugins):
+        if setup_plugins:
+            plugin = setup_plugins[0](self)
+            with plugin:
+                self.run_with(setup_plugins[1:])
+        else:
+            self._run_executable()

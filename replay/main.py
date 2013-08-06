@@ -4,6 +4,7 @@ import os.path
 import sys
 import replay.runner
 import replay.script
+import replay.plugins
 from temp_dir import in_temp_dir
 
 
@@ -68,9 +69,17 @@ def run(working_directory, args):
     script_name, _ = os.path.splitext(script_path.name)
 
     runner = replay.runner.Runner(context, script, script_name)
-    runner.run()
+    setup_plugins = (
+        replay.plugins.WorkingDirectory,
+        replay.plugins.DataStore,
+        replay.plugins.VirtualEnv
+        )
+
+    runner.run_with(setup_plugins)
 
 
+# TODO: TemporaryDirectory vs WorkingDirectory
+# TODO: Postgres plugin
 def main():
     args = parse_args(sys.argv[1:])
     if args.script_working_directory is MAKE_TEMPORARY_DIRECTORY:

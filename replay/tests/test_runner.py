@@ -1,16 +1,20 @@
 import unittest
 TODO = unittest.skip('not implemented yet')
-from replay import plugins
-import replay.runner as m
+import mock
+
+import os.path
+from temp_dir import within_temp_dir
+
+from externals import fspath
+from externals.fake import Fake as MemoryStore
 
 from replay.tests import fixtures
 from replay.tests.script import script_from
 
-import os.path
+import replay.runner as m
+
+from replay import plugins
 from replay import exceptions
-from temp_dir import within_temp_dir
-from externals import fspath
-from externals.fake import Fake as MemoryStore
 
 
 class Test_Runner(unittest.TestCase):
@@ -49,7 +53,55 @@ class Test_Runner_run_in_virtualenv(unittest.TestCase):
         self.assertEqual('XXIII', result.stdout.rstrip())
 
 
-class Test_Runner_run(unittest.TestCase):
+def get_plugin(n, call_trace):
+    class TPlugin(plugins.Plugin):
+        def __enter__(self):
+            call_trace.append((n, '__enter__'))
+        def __exit__(self, *args, **kwargs):
+            call_trace.append((n, '__exit__'))
+    return TPlugin
+
+
+class Test_Runner_run_with(unittest.TestCase):
+
+    PLUGINS = (
+        plugins.WorkingDirectory,
+        plugins.DataStore,
+        plugins.VirtualEnv
+        )
+
+    @within_temp_dir
+    def test_all_plugins_are_run_in_order(self):
+        call_trace = []
+        setup_plugins = (
+            get_plugin(1, call_trace),
+            get_plugin(2, call_trace),
+            get_plugin(3, call_trace))
+
+        def record_call(*args, **kwargs):
+            call_trace.append(('*', 'call'))
+
+        patch = mock.patch(
+            'replay.runner.Runner._run_executable',
+            side_effect=record_call)
+        with patch:
+            f = fixtures.Runner(
+                '''\
+                script: scripts/import_roman.py
+                ''')
+            f.runner.run_with(setup_plugins)
+
+        self.assertEqual(
+            [
+                (1, '__enter__'),
+                (2, '__enter__'),
+                (3, '__enter__'),
+                ('*', 'call'),
+                (3, '__exit__'),
+                (2, '__exit__'),
+                (1, '__exit__')
+            ],
+            call_trace)
 
     @within_temp_dir
     def test_script_is_run_in_context_specified_directory(self):
@@ -61,7 +113,7 @@ class Test_Runner_run(unittest.TestCase):
             script: scripts/getcwd.py
             ''')
 
-        f.runner.run()
+        f.runner.run_with(self.PLUGINS)
 
         self.assertEqual(
             os.path.normpath(f.context.working_directory.path),
@@ -75,7 +127,7 @@ class Test_Runner_run(unittest.TestCase):
             ''')
 
         with self.assertRaises(exceptions.ScriptError):
-            f.runner.run()
+            f.runner.run_with(self.PLUGINS)
 
     @within_temp_dir
     def test_script_dependencies_are_available(self):
@@ -87,7 +139,7 @@ class Test_Runner_run(unittest.TestCase):
             script: scripts/import_roman.py
             ''')
 
-        f.runner.run()
+        f.runner.run_with(self.PLUGINS)
 
     @within_temp_dir
     def test_input_files_are_available_to_script(self):
@@ -103,7 +155,7 @@ class Test_Runner_run(unittest.TestCase):
         (f.datastore / 'data1').content = 'OK'
         (f.datastore / 'deeper/data2').content = 'exists, too'
 
-        f.runner.run()
+        f.runner.run_with(self.PLUGINS)
 
     @within_temp_dir
     def test_generated_output_files_are_uploaded_to_datastore(self):
@@ -119,7 +171,7 @@ class Test_Runner_run(unittest.TestCase):
 
         (f.datastore / 'data').content = 'content'
 
-        f.runner.run()
+        f.runner.run_with(self.PLUGINS)
 
         self.assertEqual('content', (f.datastore / 'data-copy').content)
         self.assertEqual('content', (f.datastore / 'another-copy').content)
@@ -167,14 +219,3 @@ class Test_Runner_virtualenv_name(unittest.TestCase):
         self.assertEqual(
             '_replay_e8a8bbe2f9fd4e9286aeedab2a5009e2',
             f1.runner.virtualenv_name)
-
-
-# refactor Runner - add plugin interface & move actions into plugins
-#
-# REQ:
-# - plugins' before_execute should be run in requested order
-# - after_execute actions are run in reverse order of registration
-# - after_execute actions are run even if there is an exception in
-#   - before_execute of another plugin
-#   - while running the executable
-#   - in an after_execute action
