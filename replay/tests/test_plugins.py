@@ -85,6 +85,19 @@ class TestWorkingDirectory(unittest.TestCase):
             self.assertTrue(os.path.isdir(self.script_working_directory))
 
 
+class TestWorkingDirectory_temporary_directory(TestWorkingDirectory):
+
+    def run_plugin(self):
+        f = fixtures.Runner('{}')
+        f.context.working_directory = (
+            plugins.WorkingDirectory.TEMPORARY_DIRECTORY)
+        self.orig_working_directory = os.getcwd()
+
+        with plugins.WorkingDirectory(f.runner):
+            self.script_working_directory = os.getcwd()
+            self.assertTrue(os.path.isdir(self.script_working_directory))
+
+
 class TestVirtualEnv(unittest.TestCase):
 
     @within_temp_dir
