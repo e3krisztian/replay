@@ -6,6 +6,7 @@ from replay import exceptions
 import getpass
 import datetime
 import tempfile
+from externals import fspath
 
 
 class Plugin(object):
@@ -40,19 +41,21 @@ class WorkingDirectory(Plugin):
     The directory to run in is taken from the context.
     '''
 
+    TEMPORARY_DIRECTORY = object()
+
     def __init__(self, runner):
         super(WorkingDirectory, self).__init__(runner)
         self.context = runner.context
-        self.original_working_directory = '.'
-        self.working_directory = None
-        self._make_working_directory()
+        self.original_working_directory = os.getcwd()
 
-    def _make_working_directory(self):
-        self.working_directory = self.context.working_directory.path
-        os.mkdir(self.working_directory)
+        # make working_directory
+        if self.context.working_directory is self.TEMPORARY_DIRECTORY:
+            self.working_directory = tempfile.mkdtemp()
+        else:
+            self.working_directory = self.context.working_directory.path
+            os.mkdir(self.working_directory)
 
     def __enter__(self):
-        self.original_working_directory = os.getcwd()
         os.chdir(self.working_directory)
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -60,17 +63,6 @@ class WorkingDirectory(Plugin):
             os.chdir(self.original_working_directory)
         finally:
             shutil.rmtree(self.working_directory)
-
-
-class TemporaryDirectory(WorkingDirectory):
-    '''I ensure that the scripts run in a clean directory, \
-    and also clean up after them.
-
-    The directory will be a new system generated temporary directory.
-    '''
-
-    def _make_working_directory(self):
-        self.working_directory = tempfile.mkdtemp()
 
 
 class DataStore(Plugin):
@@ -89,7 +81,7 @@ class DataStore(Plugin):
     # helpers
     def _file_pairs(self, copy_spec):
         datastore = self.runner.context.datastore
-        working_directory = self.runner.context.working_directory
+        working_directory = fspath.working_directory()
 
         for spec in copy_spec:
             for local_file, ds_file in spec.iteritems():

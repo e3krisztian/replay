@@ -5,10 +5,8 @@ import sys
 import replay.runner
 import replay.script
 import replay.plugins
-from temp_dir import in_temp_dir
 
-
-MAKE_TEMPORARY_DIRECTORY = object()
+TEMPORARY_DIRECTORY = replay.plugins.WorkingDirectory.TEMPORARY_DIRECTORY
 
 
 def get_virtualenv_parent_dir():
@@ -32,7 +30,7 @@ def parse_args(args):
     parser.add_argument(
         '--script-working-directory',
         '--dir',
-        default=MAKE_TEMPORARY_DIRECTORY,
+        default=TEMPORARY_DIRECTORY,
         help='Run script[s] under this directory - somewhere'
         ' (default: NEW TEMPORARY DIRECTORY)')
 
@@ -56,11 +54,19 @@ def parse_args(args):
     return args
 
 
-def run(working_directory, args):
+def get_script_working_directory(args):
+    if args.script_working_directory is TEMPORARY_DIRECTORY:
+        return TEMPORARY_DIRECTORY
+    return fspath.FsPath(args.script_working_directory)
+
+
+def main():
+    args = parse_args(sys.argv[1:])
+
     context = replay.runner.Context(
         fspath.FsPath(args.datastore),
         fspath.FsPath(args.virtualenv_parent_directory),
-        fspath.FsPath(working_directory))
+        get_script_working_directory(args))
 
     script_path = fspath.FsPath(args.script_path)
     script_dir = script_path.parent().path
@@ -69,24 +75,15 @@ def run(working_directory, args):
     script_name, _ = os.path.splitext(script_path.name)
 
     runner = replay.runner.Runner(context, script, script_name)
+
     setup_plugins = (
         replay.plugins.WorkingDirectory,
         replay.plugins.DataStore,
-        replay.plugins.VirtualEnv
+        replay.plugins.VirtualEnv,
+        replay.plugins.Postgres
         )
 
     runner.run_with(setup_plugins)
-
-
-# TODO: TemporaryDirectory vs WorkingDirectory
-# TODO: Postgres plugin
-def main():
-    args = parse_args(sys.argv[1:])
-    if args.script_working_directory is MAKE_TEMPORARY_DIRECTORY:
-        with in_temp_dir():
-            run((fspath.working_directory() / 'temp').path, args)
-    else:
-        run(args.script_working_directory, args)
 
 
 if __name__ == '__main__':

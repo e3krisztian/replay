@@ -4,6 +4,7 @@ TODO = unittest.skip('not implemented yet')
 from temp_dir import within_temp_dir
 import getpass
 import os
+from externals import fspath
 
 from replay.tests import fixtures
 
@@ -34,7 +35,7 @@ class TestDataStore(unittest.TestCase):
             ''')
 
         with plugins.DataStore(f.runner):
-            (f.context.working_directory / 'an output file').content = 'data'
+            (fspath.working_directory() / 'an output file').content = 'data'
 
         self.assertEqual(
             'data',
@@ -57,7 +58,6 @@ class TestWorkingDirectory(unittest.TestCase):
 
     orig_working_directory = str
     script_working_directory = str
-    CLASS_UNDER_TEST = plugins.WorkingDirectory
 
     @within_temp_dir
     def test_working_directory_changed(self):
@@ -80,14 +80,9 @@ class TestWorkingDirectory(unittest.TestCase):
         f = fixtures.Runner('{}')
         self.orig_working_directory = os.getcwd()
 
-        with plugins.TemporaryDirectory(f.runner):
+        with plugins.WorkingDirectory(f.runner):
             self.script_working_directory = os.getcwd()
             self.assertTrue(os.path.isdir(self.script_working_directory))
-
-
-class TestTemporaryDirectory(TestWorkingDirectory):
-
-    CLASS_UNDER_TEST = plugins.WorkingDirectory
 
 
 class TestVirtualEnv(unittest.TestCase):

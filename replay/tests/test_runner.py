@@ -23,7 +23,7 @@ class Test_Runner(unittest.TestCase):
         context = m.Context(
             MemoryStore(),
             fspath.working_directory() / '.virtualenvs',
-            fspath.working_directory() / 'temp')
+            (fspath.working_directory() / 'temp').path)
         m.Runner(context, script_from('{}'), 'minimal')
 
     def test_invalid_script_name(self):
@@ -55,10 +55,13 @@ class Test_Runner_run_in_virtualenv(unittest.TestCase):
 
 def get_plugin(n, call_trace):
     class TPlugin(plugins.Plugin):
+
         def __enter__(self):
             call_trace.append((n, '__enter__'))
+
         def __exit__(self, *args, **kwargs):
             call_trace.append((n, '__exit__'))
+
     return TPlugin
 
 

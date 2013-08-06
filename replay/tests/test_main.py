@@ -1,9 +1,10 @@
 import unittest
 import replay.main as m
-from externals.fspath import working_directory
+
 import mock
 from temp_dir import within_temp_dir
 import pkg_resources
+from externals.fspath import working_directory
 
 
 class Test_parse_args(unittest.TestCase):
@@ -14,7 +15,7 @@ class Test_parse_args(unittest.TestCase):
         self.assertEqual(working_directory().path, args.datastore)
 
         self.assertEqual(
-            m.MAKE_TEMPORARY_DIRECTORY,
+            m.TEMPORARY_DIRECTORY,
             args.script_working_directory)
 
         self.assertEqual(

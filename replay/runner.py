@@ -2,7 +2,6 @@ import os
 import re
 from replay import exceptions
 import external_process
-from replay import plugins
 import hashlib
 
 
@@ -11,7 +10,7 @@ class Context(object):
     datastore = None  # External
     virtualenv_parent_dir = str
     index_server_url = str
-    working_directory = None  # External
+    working_directory = None  # External | TEMPORARY_DIRECTORY
 
     def __init__(
             self,
