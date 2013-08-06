@@ -1,0 +1,12 @@
+# take an arab number and convert to roman
+
+inputs:
+    - arab : arab
+
+outputs:
+    - roman : roman
+
+script: to_roman.py
+
+python dependencies:
+    - roman==2.0.0

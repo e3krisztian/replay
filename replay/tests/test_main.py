@@ -2,6 +2,8 @@ import unittest
 import replay.main as m
 from externals.fspath import working_directory
 import mock
+from temp_dir import within_temp_dir
+import pkg_resources
 
 
 class Test_parse_args(unittest.TestCase):
@@ -51,3 +53,38 @@ class Test_get_virtualenv_parent_dir(unittest.TestCase):
             self.assertEqual(
                 '/test/user/home/.virtualenvs',
                 m.get_virtualenv_parent_dir())
+
+
+class Test_main(unittest.TestCase):
+
+    @within_temp_dir
+    def test_run_with_defaults(self):
+        to_roman_script = pkg_resources.resource_filename(
+            'replay',
+            'tests/fixtures/scripts/to_roman.script')
+        ds = working_directory()
+
+        (ds / 'arab').content = '23'
+
+        with mock.patch('sys.argv', ['replay', to_roman_script]):
+            m.main()
+
+        self.assertEqual('XXIII', (ds / 'roman').content)
+
+    @within_temp_dir
+    def test_run_with_explicit_working_directory(self):
+        getcwd_script = pkg_resources.resource_filename(
+            'replay',
+            'tests/fixtures/scripts/getcwd.script')
+        ds = working_directory() / 'datastore'
+        wd = (working_directory() / 'script_working_directory').path
+
+        command = [
+            'replay',
+            '--script-working-directory=' + wd,
+            '--datastore=' + ds.path,
+            getcwd_script]
+        with mock.patch('sys.argv', command):
+            m.main()
+
+        self.assertEqual(wd, (ds / 'working_directory').content)
