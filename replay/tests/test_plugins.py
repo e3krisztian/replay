@@ -52,6 +52,43 @@ class TestDataStore(unittest.TestCase):
                 pass
 
 
+class TestWorkingDirectory(unittest.TestCase):
+
+    orig_working_directory = str
+    script_working_directory = str
+    CLASS_UNDER_TEST = plugins.WorkingDirectory
+
+    @within_temp_dir
+    def test_working_directory_changed(self):
+        self.run_plugin()
+        self.assertNotEqual(
+            self.orig_working_directory,
+            self.script_working_directory)
+
+    @within_temp_dir
+    def test_script_dir_is_deleted(self):
+        self.run_plugin()
+        self.assertFalse(os.path.isdir(self.script_working_directory))
+
+    @within_temp_dir
+    def test_orig_directory_restored(self):
+        self.run_plugin()
+        self.assertEqual(self.orig_working_directory, os.getcwd())
+
+    def run_plugin(self):
+        f = fixtures.Runner('{}')
+        self.orig_working_directory = os.getcwd()
+
+        with plugins.TemporaryDirectory(f.runner):
+            self.script_working_directory = os.getcwd()
+            self.assertTrue(os.path.isdir(self.script_working_directory))
+
+
+class TestTemporaryDirectory(TestWorkingDirectory):
+
+    CLASS_UNDER_TEST = plugins.WorkingDirectory
+
+
 class TestVirtualEnv(unittest.TestCase):
 
     @within_temp_dir

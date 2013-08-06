@@ -5,6 +5,7 @@ import os
 from replay import exceptions
 import getpass
 import datetime
+import tempfile
 
 
 class Plugin(object):
@@ -35,24 +36,41 @@ class WorkingDirectory(Plugin):
 
     '''I ensure that the scripts run in a clean directory, \
     and also clean up after them.
+
+    The directory to run in is taken from the context.
     '''
 
     def __init__(self, runner):
         super(WorkingDirectory, self).__init__(runner)
         self.context = runner.context
         self.original_working_directory = '.'
+        self.working_directory = None
+        self._make_working_directory()
+
+    def _make_working_directory(self):
+        self.working_directory = self.context.working_directory.path
+        os.mkdir(self.working_directory)
 
     def __enter__(self):
-        working_directory = self.context.working_directory.path
-        os.mkdir(working_directory)
         self.original_working_directory = os.getcwd()
-        os.chdir(working_directory)
+        os.chdir(self.working_directory)
 
     def __exit__(self, exc_type, exc_value, traceback):
         try:
             os.chdir(self.original_working_directory)
         finally:
-            shutil.rmtree(self.context.working_directory.path)
+            shutil.rmtree(self.working_directory)
+
+
+class TemporaryDirectory(WorkingDirectory):
+    '''I ensure that the scripts run in a clean directory, \
+    and also clean up after them.
+
+    The directory will be a new system generated temporary directory.
+    '''
+
+    def _make_working_directory(self):
+        self.working_directory = tempfile.mkdtemp()
 
 
 class DataStore(Plugin):
