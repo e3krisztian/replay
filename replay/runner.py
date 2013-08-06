@@ -48,11 +48,8 @@ class Runner(object):
             self.context.virtualenv_parent_dir / self.virtualenv_name)
 
     def _package_hash(self):
-        hasher = hashlib.md5()
-        for dep in sorted(self.script.python_dependencies):
-            hasher.update(dep)
-            hasher.update('\n')
-        return hasher.hexdigest()
+        dependencies = '\n'.join(sorted(self.script.python_dependencies))
+        return hashlib.md5(dependencies).hexdigest()
 
     def run_in_virtualenv(self, cmdspec):
         venv_bin = (self.virtualenv_dir / 'bin').path

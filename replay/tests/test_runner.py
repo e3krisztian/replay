@@ -150,7 +150,7 @@ class Test_Runner_virtualenv_name(unittest.TestCase):
                 - pi>=3.14
             ''')
         self.assertEqual(
-            '_replay_2adb1850a8104639a1cfee83c5c3d5d5',
+            '_replay_e8a8bbe2f9fd4e9286aeedab2a5009e2',
             f.runner.virtualenv_name)
 
     def test_python_package_order_does_not_matter(self):
@@ -173,7 +173,7 @@ class Test_Runner_virtualenv_name(unittest.TestCase):
             f1.runner.virtualenv_name,
             f2.runner.virtualenv_name)
         self.assertEqual(
-            '_replay_2adb1850a8104639a1cfee83c5c3d5d5',
+            '_replay_e8a8bbe2f9fd4e9286aeedab2a5009e2',
             f1.runner.virtualenv_name)
 
 
