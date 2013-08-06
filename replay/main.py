@@ -20,19 +20,25 @@ def parse_args(args):
     # optional parameters, with defaults
     parser.add_argument(
         '--datastore',
-        default=fspath.working_directory().path)
+        default=fspath.working_directory().path,
+        help='Persistent place for data (default: %(default)s)')
 
     parser.add_argument(
         '--script_working_directory',
-        default=MAKE_TEMPORARY_DIRECTORY)
+        default=MAKE_TEMPORARY_DIRECTORY,
+        help='Run script[s] under this directory'
+        ' (default: NEW TEMPORARY DIRECTORY)')
 
     parser.add_argument(
         '--virtualenv_parent_directory',
-        default=get_virtualenv_parent_dir())
+        default=get_virtualenv_parent_dir(),
+        help='Use this directory to cache python virtual environments'
+        ' (default: %(default)s)')
 
     # mandatory parameter
     parser.add_argument(
-        'script_path')
+        'script_path',
+        help='Script to run')
 
     args = parser.parse_args(args)
 
