@@ -1,7 +1,3 @@
-import re
-from replay import exceptions
-
-
 class Context(object):
 
     datastore = None  # External
@@ -21,9 +17,6 @@ class Context(object):
         self.index_server_url = index_server_url
 
 
-RE_SCRIPT_NAME = re.compile('^[a-z][a-z0-9_]*$', re.IGNORECASE)
-
-
 class Runner(object):
 
     '''I run scripts in isolation'''
@@ -31,8 +24,6 @@ class Runner(object):
     def __init__(self, context, script, script_name):
         self.context = context
         self.script = script
-        if not RE_SCRIPT_NAME.match(script_name):
-            raise exceptions.InvalidScriptName(script_name)
         self.script_name = script_name
 
     def run_with(self, setup_plugins):

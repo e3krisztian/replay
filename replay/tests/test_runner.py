@@ -25,11 +25,6 @@ class Test_Runner(unittest.TestCase):
             (fspath.working_directory() / 'temp').path)
         m.Runner(context, script_from('{}'), 'minimal')
 
-    def test_invalid_script_name(self):
-        with self.assertRaises(exceptions.InvalidScriptName):
-            context = None
-            m.Runner(context, script_from('{}'), 'm inimal')
-
 
 def get_plugin(n, call_trace):
     class TPlugin(plugins.Plugin):

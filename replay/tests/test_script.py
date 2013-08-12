@@ -2,6 +2,7 @@ import unittest
 import os.path
 import replay.script as m
 from replay.tests.script import FIXTURES_DIR, script_from
+from replay import exceptions
 
 
 class Test_Script(unittest.TestCase):
@@ -23,9 +24,13 @@ class Test_Script(unittest.TestCase):
         script_filename = os.path.join(FIXTURES_DIR, 'sample_script.yaml')
 
         with open(script_filename) as script_file:
-            script = m.Script(FIXTURES_DIR, 'name?!', script_file)
+            script = m.Script(FIXTURES_DIR, 'valid_name', script_file)
 
-        self.assertEqual('name?!', script.name)
+        self.assertEqual('valid_name', script.name)
+
+    def test_invalid_script_name(self):
+        with self.assertRaises(exceptions.InvalidScriptName):
+            script_from('{}', name='m inimal')
 
     def test_attribute_inputs(self):
         script = script_from('''\
