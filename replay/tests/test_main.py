@@ -78,14 +78,14 @@ class Test_main(unittest.TestCase):
             'replay',
             'tests/fixtures/scripts/getcwd.script')
         ds = working_directory() / 'datastore'
-        wd = (working_directory() / 'script_working_directory').path
+        wd = working_directory() / 'script_working_directory'
 
         command = [
             'replay',
-            '--script-working-directory=' + wd,
+            '--script-working-directory=' + wd.path,
             '--datastore=' + ds.path,
             getcwd_script]
         with mock.patch('sys.argv', command):
             m.main()
 
-        self.assertEqual(wd, (ds / 'working_directory').content)
+        self.assertEqual(wd.path, (ds / 'working_directory').content)

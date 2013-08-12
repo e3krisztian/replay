@@ -7,6 +7,10 @@ import getpass
 import datetime
 import tempfile
 from externals import fspath
+import logging
+
+
+log = logging.getLogger(__name__)
 
 
 class Plugin(object):
@@ -56,12 +60,17 @@ class WorkingDirectory(Plugin):
             os.mkdir(self.working_directory)
 
     def __enter__(self):
+        log.debug('WorkingDirectory: __enter__')
+        log.debug('WorkingDirectory: CD %s', self.working_directory)
         os.chdir(self.working_directory)
 
     def __exit__(self, exc_type, exc_value, traceback):
+        log.debug('WorkingDirectory: __exit__')
         try:
+            log.debug('WorkingDirectory: CD %s', self.original_working_directory)
             os.chdir(self.original_working_directory)
         finally:
+            log.debug('WorkingDirectory: RM %s', self.working_directory)
             shutil.rmtree(self.working_directory)
 
 
