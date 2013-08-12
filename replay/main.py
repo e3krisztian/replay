@@ -2,7 +2,7 @@ import argparse
 from externals import fspath
 import os.path
 import sys
-import replay.runner
+import replay.context
 import replay.script
 import replay.plugins
 
@@ -61,21 +61,28 @@ def get_script_working_directory(args):
     return fspath.FsPath(args.script_working_directory)
 
 
+def run_with(setup_plugins, context, script):
+    '''I run scripts (maybe in isolation)'''
+
+    if setup_plugins:
+        plugin = setup_plugins[0](context, script)
+        with plugin:
+            run_with(setup_plugins[1:], context, script)
+
+
 def main():
     args = parse_args(sys.argv[1:])
 
-    context = replay.runner.Context(
+    context = replay.context.Context(
         fspath.FsPath(args.datastore),
         fspath.FsPath(args.virtualenv_parent_directory),
         get_script_working_directory(args))
 
     script_path = fspath.FsPath(args.script_path)
     script_dir = script_path.parent().path
-    with open(args.script_path) as script_file:
-        script = replay.script.Script(script_dir, script_file)
     script_name, _ = os.path.splitext(script_path.name)
-
-    runner = replay.runner.Runner(context, script, script_name)
+    with open(args.script_path) as script_file:
+        script = replay.script.Script(script_dir, script_name, script_file)
 
     setup_plugins = (
         (replay.plugins.TemporaryDirectory
@@ -87,7 +94,7 @@ def main():
         replay.plugins.Execute
         )
 
-    runner.run_with(setup_plugins)
+    run_with(setup_plugins, context, script)
 
 
 if __name__ == '__main__':

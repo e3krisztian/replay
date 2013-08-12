@@ -1,5 +1,6 @@
 from externals.fake import Fake as MemoryStore
-import replay.runner as runner
+from replay import context
+from replay import main
 import pkg_resources
 from replay.tests.script import script_from
 from replay.tests.path2url import path2url
@@ -9,7 +10,7 @@ import os.path
 
 class Runner(object):
 
-    '''I hold a runner and its parts in a way,
+    '''I hold a context & script. The context is set up in a way,
     that by removing the current working directory no residue remains.
     '''
 
@@ -17,13 +18,18 @@ class Runner(object):
         venv_parent_dir = working_directory() / 'replay_virtualenvs'
 
         self.datastore = MemoryStore()
-        self.context = runner.Context(
+        self.context = context.Context(
             self.datastore,
             venv_parent_dir,
             working_directory() / 'temp',
             self._local_pypi_url)
         self.script = script_from(script)
-        self.runner = runner.Runner(self.context, self.script, 'test_script')
+
+    def plugin(self, class_):
+        return class_(self.context, self.script)
+
+    def run_with(self, setup_plugins):
+        main.run_with(setup_plugins, self.context, self.script)
 
     @property
     def _local_pypi_url(self):

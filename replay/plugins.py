@@ -19,13 +19,14 @@ class Plugin(object):
     '''I am a context manager, I can perform setup tasks \
     and also provide cleanup for Runner
 
-    My operation is usually driven by runner.context & runner.script
+    My operation is usually driven by one of context & script
     '''
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, runner):
-        self.runner = runner
+    def __init__(self, context, script):
+        self.context = context
+        self.script = script
 
     @abc.abstractmethod
     def __enter__(self):  # pragma: nocover
@@ -36,7 +37,7 @@ class Plugin(object):
         pass
 
     def has_option(self, option):
-        return self.runner.script.has_option(option)
+        return self.script.has_option(option)
 
 
 class _WorkingDirectoryPlugin(Plugin):
@@ -46,9 +47,8 @@ class _WorkingDirectoryPlugin(Plugin):
     and also clean up after them.
     '''
 
-    def __init__(self, runner):
-        super(_WorkingDirectoryPlugin, self).__init__(runner)
-        self.context = runner.context
+    def __init__(self, context, script):
+        super(_WorkingDirectoryPlugin, self).__init__(context, script)
         self.original_working_directory = os.getcwd()
         self.working_directory = None
 
@@ -68,7 +68,7 @@ class _WorkingDirectoryPlugin(Plugin):
         os.chdir(directory)
 
     def _copy_scripts_to(self, destination):
-        source = self.runner.script.dir
+        source = self.script.dir
         log.debug(
             '%s: copytree %s -> %s',
             self.__class__.__name__,
@@ -132,7 +132,7 @@ class DataStore(Plugin):
 
     # helpers
     def _file_pairs(self, copy_spec):
-        datastore = self.runner.context.datastore
+        datastore = self.context.datastore
         working_directory = fspath.working_directory()
 
         for spec in copy_spec:
@@ -140,10 +140,10 @@ class DataStore(Plugin):
                 yield (working_directory / local_file), (datastore / ds_file)
 
     def _input_file_pairs(self):
-        return self._file_pairs(self.runner.script.inputs)
+        return self._file_pairs(self.script.inputs)
 
     def _output_file_pairs(self):
-        return self._file_pairs(self.runner.script.outputs)
+        return self._file_pairs(self.script.outputs)
 
     def _check_inputs(self):
         for local, datastore in self._input_file_pairs():
@@ -182,11 +182,11 @@ class _EnvironKeyState(object):
 
 class PythonDependencies(Plugin):
 
-    def __init__(self, runner):
-        super(PythonDependencies, self).__init__(runner)
+    def __init__(self, context, script):
+        super(PythonDependencies, self).__init__(context, script)
         self.virtualenv_name = '_replay_' + self._package_hash()
         self.virtualenv_dir = (
-            self.runner.context.virtualenv_parent_dir / self.virtualenv_name)
+            self.context.virtualenv_parent_dir / self.virtualenv_name)
         self.PATH = _EnvironKeyState(os.environ, 'PATH')
 
     def __enter__(self):
@@ -200,13 +200,13 @@ class PythonDependencies(Plugin):
         self.PATH.restore(os.environ)
 
     def _package_hash(self):
-        python_dependencies = self.runner.script.python_dependencies
+        python_dependencies = self.script.python_dependencies
         dependencies = '\n'.join(sorted(python_dependencies))
         return hashlib.md5(dependencies).hexdigest()
 
     @property
     def index_server_url(self):
-        return self.runner.context.index_server_url
+        return self.context.index_server_url
 
     def _install_package(self, package_spec, index_server_url):
         cmdspec = (
@@ -224,15 +224,15 @@ class PythonDependencies(Plugin):
         #    (e.g. PYTHON_VIRTUALENV)
         #  - specify python interpreter to use (python 2 / 3 / pypy / ...)
         external_process.run(['virtualenv', self.virtualenv_dir.path])
-        python_dependencies = self.runner.script.python_dependencies
+        python_dependencies = self.script.python_dependencies
         for package_spec in python_dependencies:
             self._install_package(package_spec, self.index_server_url)
 
 
 class Postgres(Plugin):
 
-    def __init__(self, runner):
-        super(Postgres, self).__init__(runner)
+    def __init__(self, context, script):
+        super(Postgres, self).__init__(context, script)
         self.timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
         self.enabled = self.has_option('uses psql')
         self.keep_database = (
@@ -242,7 +242,7 @@ class Postgres(Plugin):
     @property
     def database(self):
         return '{user}_{script_name}_{timestamp}'.format(
-            script_name=self.runner.script_name,
+            script_name=self.script.name,
             user=getpass.getuser(),
             timestamp=self.timestamp)
 
@@ -260,8 +260,8 @@ class Postgres(Plugin):
 class Execute(Plugin):
 
     def __enter__(self):
-        if self.runner.script.executable_name:
-            command = ['python', self.runner.script.executable_name]
+        if self.script.executable_name:
+            command = ['python', self.script.executable_name]
             result = external_process.run(command)
             if result.status != 0:
                 raise exceptions.ScriptError(result)
