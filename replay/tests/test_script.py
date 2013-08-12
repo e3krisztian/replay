@@ -6,7 +6,12 @@ from replay.tests.script import FIXTURES_DIR, script_from
 
 class Test_Script(unittest.TestCase):
 
-    def check_sample_script(self, script):
+    def test_create(self):
+        script_filename = os.path.join(FIXTURES_DIR, 'sample_script.yaml')
+
+        with open(script_filename) as script_file:
+            script = m.Script(FIXTURES_DIR, 'name', script_file)
+
         self.assertEqual(FIXTURES_DIR, script.dir)
         self.assertEqual([{'input': 'dsinput'}], script.inputs)
         self.assertEqual([{'output': 'dsoutput'}], script.outputs)
@@ -14,13 +19,13 @@ class Test_Script(unittest.TestCase):
         self.assertEqual([], script.python_dependencies)
         self.assertTrue(script.has_option('some option'))
 
-    def test_create(self):
+    def test_attribute_name(self):
         script_filename = os.path.join(FIXTURES_DIR, 'sample_script.yaml')
 
         with open(script_filename) as script_file:
-            script = m.Script(FIXTURES_DIR, script_file)
+            script = m.Script(FIXTURES_DIR, 'name?!', script_file)
 
-        self.check_sample_script(script)
+        self.assertEqual('name?!', script.name)
 
     def test_attribute_inputs(self):
         script = script_from('''\
