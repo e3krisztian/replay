@@ -7,6 +7,7 @@ import getpass
 import datetime
 import tempfile
 from externals import fspath
+import hashlib
 import logging
 
 
@@ -30,7 +31,8 @@ class Plugin(object):
     def __enter__(self):  # pragma: nocover
         pass
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    @abc.abstractmethod
+    def __exit__(self, exc_type, exc_value, traceback):  # pragma: nocover
         pass
 
     def has_option(self, option):
@@ -162,43 +164,6 @@ class DataStore(Plugin):
             local.copy_to(datastore)
 
 
-class VirtualEnv(Plugin):
-
-    def __enter__(self):
-        if not self.virtualenv_dir.exists():
-            self._make_virtualenv()
-
-    @property
-    def virtualenv_dir(self):
-        return self.runner.virtualenv_dir
-
-    def run_in_virtualenv(self, cmdspec):
-        return self.runner.run_in_virtualenv(cmdspec)
-
-    @property
-    def index_server_url(self):
-        return self.runner.context.index_server_url
-
-    def _install_package(self, package_spec, index_server_url):
-        cmdspec = (
-            ['pip', 'install']
-            + (['--index-url=' + index_server_url] if index_server_url else [])
-            + [package_spec])
-        result = self.run_in_virtualenv(cmdspec)
-        if result.status != 0:
-            raise exceptions.MissingPythonDependency(result)
-
-    def _make_virtualenv(self):
-        # potential enhancements:
-        #  - clean environment from behavior changing settings
-        #    (e.g. PYTHON_VIRTUALENV)
-        #  - specify python interpreter to use (python 2 / 3 / pypy / ...)
-        external_process.run(['virtualenv', self.virtualenv_dir.path])
-        python_dependencies = self.runner.script.python_dependencies
-        for package_spec in python_dependencies:
-            self._install_package(package_spec, self.index_server_url)
-
-
 class _EnvironKeyState(object):
 
     def __init__(self, environ, key):
@@ -213,6 +178,55 @@ class _EnvironKeyState(object):
                 del environ[key]
         else:
             environ[key] = self.value
+
+
+class VirtualEnv(Plugin):
+
+    def __init__(self, runner):
+        super(VirtualEnv, self).__init__(runner)
+        self.virtualenv_name = '_replay_' + self._package_hash()
+        self.virtualenv_dir = (
+            self.runner.context.virtualenv_parent_dir / self.virtualenv_name)
+        self.PATH = _EnvironKeyState(os.environ, 'PATH')
+
+    def __enter__(self):
+        venv_bin = (self.virtualenv_dir / 'bin').path
+        path = venv_bin + os.pathsep + os.environ.get('PATH', '')
+        os.environ['PATH'] = path
+        if not self.virtualenv_dir.exists():
+            self._make_virtualenv()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.PATH.restore(os.environ)
+
+    def _package_hash(self):
+        python_dependencies = self.runner.script.python_dependencies
+        dependencies = '\n'.join(sorted(python_dependencies))
+        return hashlib.md5(dependencies).hexdigest()
+
+    @property
+    def index_server_url(self):
+        return self.runner.context.index_server_url
+
+    def _install_package(self, package_spec, index_server_url):
+        cmdspec = (
+            ['pip', 'install']
+            + (['--index-url=' + index_server_url] if index_server_url else [])
+            + [package_spec])
+
+        result = external_process.run(cmdspec)
+        if result.status != 0:
+            raise exceptions.MissingPythonDependency(result)
+
+    def _make_virtualenv(self):
+        # potential enhancements:
+        #  - clean environment from behavior changing settings
+        #    (e.g. PYTHON_VIRTUALENV)
+        #  - specify python interpreter to use (python 2 / 3 / pypy / ...)
+        external_process.run(['virtualenv', self.virtualenv_dir.path])
+        python_dependencies = self.runner.script.python_dependencies
+        for package_spec in python_dependencies:
+            self._install_package(package_spec, self.index_server_url)
 
 
 class Postgres(Plugin):

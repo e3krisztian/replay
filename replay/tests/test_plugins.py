@@ -117,10 +117,10 @@ class TestVirtualEnv(unittest.TestCase):
             ''')
         virtualenv_parent_dir = f.context.virtualenv_parent_dir
 
-        with plugins.VirtualEnv(f.runner):
-            pass
+        plugin = plugins.VirtualEnv(f.runner)
+        with plugin:
+            virtualenv_dir = virtualenv_parent_dir / plugin.virtualenv_name
 
-        virtualenv_dir = virtualenv_parent_dir / f.runner.virtualenv_name
         self.assertTrue(virtualenv_dir.is_dir())
 
     @within_temp_dir
@@ -132,10 +132,10 @@ class TestVirtualEnv(unittest.TestCase):
         virtualenv_parent_dir = f.context.virtualenv_parent_dir
 
         with plugins.VirtualEnv(f.runner):
-            with plugins.VirtualEnv(f.runner):
-                pass
+            plugin = plugins.VirtualEnv(f.runner)
+            with plugin:
+                virtualenv_dir = virtualenv_parent_dir / plugin.virtualenv_name
 
-        virtualenv_dir = virtualenv_parent_dir / f.runner.virtualenv_name
         self.assertTrue(virtualenv_dir.is_dir())
 
     @within_temp_dir
@@ -145,11 +145,11 @@ class TestVirtualEnv(unittest.TestCase):
             python dependencies:
                 - roman==2.0.0
             ''')
-        with plugins.VirtualEnv(f.runner):
-            pass
+        plugin = plugins.VirtualEnv(f.runner)
+        with plugin:
+            python = plugin.virtualenv_dir / 'bin/python'
 
         # verify, that we can import the required "roman" module
-        python = f.runner.virtualenv_dir / 'bin/python'
         program = 'import roman; print(roman.toRoman(23))'
         cmdspec = [python.path, '-c', program]
         result = external_process.run(cmdspec)
@@ -166,6 +166,66 @@ class TestVirtualEnv(unittest.TestCase):
             ''')
         with self.assertRaises(exceptions.MissingPythonDependency):
             plugins.VirtualEnv(f.runner).__enter__()
+
+    @within_temp_dir
+    def test_module_in_virtualenv_is_available(self):
+        f = fixtures.Runner(
+            '''\
+            python dependencies:
+                - roman==2.0.0
+            ''')
+
+        # verify, that we can import the required "roman" module
+        cmdspec = [
+            'python', '-c', 'import roman; print(roman.toRoman(23))']
+
+        with plugins.VirtualEnv(f.runner):
+            result = external_process.run(cmdspec)
+
+        # if result.status: print(result)
+        self.assertEqual('XXIII', result.stdout.rstrip())
+
+
+class Test_VirtualEnv_virtualenv_name(unittest.TestCase):
+
+    def test_empty_virtualenv_name(self):
+        f = fixtures.Runner('{}')
+        self.assertEqual(
+            '_replay_d41d8cd98f00b204e9800998ecf8427e',
+            plugins.VirtualEnv(f.runner).virtualenv_name)
+
+    def test_virtualenv_name_depends_on_required_python_packages(self):
+        f = fixtures.Runner(
+            '''\
+            python dependencies:
+                - a
+                - roman==2.0.0
+                - pi>=3.14
+            ''')
+        self.assertEqual(
+            '_replay_e8a8bbe2f9fd4e9286aeedab2a5009e2',
+            plugins.VirtualEnv(f.runner).virtualenv_name)
+
+    def test_python_package_order_does_not_matter(self):
+        f1 = fixtures.Runner(
+            '''\
+            python dependencies:
+                - a
+                - roman==2.0.0
+                - pi>=3.14
+            ''')
+        f2 = fixtures.Runner(
+            '''\
+            python dependencies:
+                - pi>=3.14
+                - roman==2.0.0
+                - a
+            ''')
+
+        ve_name1 = plugins.VirtualEnv(f1.runner).virtualenv_name
+        ve_name2 = plugins.VirtualEnv(f2.runner).virtualenv_name
+        self.assertEqual(ve_name1, ve_name2)
+        self.assertEqual('_replay_e8a8bbe2f9fd4e9286aeedab2a5009e2', ve_name1)
 
 
 #   postgresql:  (database name {USER}_{script_name}_{datetime})

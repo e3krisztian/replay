@@ -2,7 +2,6 @@ import os
 import re
 from replay import exceptions
 import external_process
-import hashlib
 
 
 class Context(object):
@@ -37,19 +36,6 @@ class Runner(object):
         if not RE_SCRIPT_NAME.match(script_name):
             raise exceptions.InvalidScriptName(script_name)
         self.script_name = script_name
-        self.virtualenv_name = '_replay_' + self._package_hash()
-        self.virtualenv_dir = (
-            self.context.virtualenv_parent_dir / self.virtualenv_name)
-
-    def _package_hash(self):
-        dependencies = '\n'.join(sorted(self.script.python_dependencies))
-        return hashlib.md5(dependencies).hexdigest()
-
-    def run_in_virtualenv(self, cmdspec):
-        venv_bin = (self.virtualenv_dir / 'bin').path
-        path = venv_bin + os.pathsep + os.environ.get('PATH', '')
-        env = dict(os.environ, PATH=path)
-        return external_process.run(cmdspec, env=env)
 
     def _run_executable(self):
         if self.script.executable_name:
@@ -57,7 +43,7 @@ class Runner(object):
                 self.script.dir,
                 self.script.executable_name)
 
-            result = self.run_in_virtualenv(['python', executable_script])
+            result = external_process.run(['python', executable_script])
             if result.status != 0:
                 raise exceptions.ScriptError(result)
 
