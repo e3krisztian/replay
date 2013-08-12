@@ -83,7 +83,8 @@ def main():
             else replay.plugins.WorkingDirectory),
         replay.plugins.DataStore,
         replay.plugins.PythonDependencies,
-        replay.plugins.Postgres
+        replay.plugins.Postgres,
+        replay.plugins.Execute
         )
 
     runner.run_with(setup_plugins)

@@ -1,6 +1,5 @@
 import unittest
 TODO = unittest.skip('not implemented yet')
-import mock
 
 import os.path
 from temp_dir import within_temp_dir
@@ -49,7 +48,8 @@ class Test_Runner_run_with(unittest.TestCase):
     PLUGINS = (
         plugins.WorkingDirectory,
         plugins.DataStore,
-        plugins.PythonDependencies
+        plugins.PythonDependencies,
+        plugins.Execute
         )
 
     @within_temp_dir
@@ -60,25 +60,17 @@ class Test_Runner_run_with(unittest.TestCase):
             get_plugin(2, call_trace),
             get_plugin(3, call_trace))
 
-        def record_call(*args, **kwargs):
-            call_trace.append(('*', 'call'))
-
-        patch = mock.patch(
-            'replay.runner.Runner._run_executable',
-            side_effect=record_call)
-        with patch:
-            f = fixtures.Runner(
-                '''\
-                script: scripts/import_roman.py
-                ''')
-            f.runner.run_with(setup_plugins)
+        f = fixtures.Runner(
+            '''\
+            script: scripts/import_roman.py
+            ''')
+        f.runner.run_with(setup_plugins)
 
         self.assertEqual(
             [
                 (1, '__enter__'),
                 (2, '__enter__'),
                 (3, '__enter__'),
-                ('*', 'call'),
                 (3, '__exit__'),
                 (2, '__exit__'),
                 (1, '__exit__')

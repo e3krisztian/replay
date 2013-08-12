@@ -255,3 +255,16 @@ class Postgres(Plugin):
         self.PGDATABASE.restore(os.environ)
         if not self.keep_database:
             external_process.run(['dropdb', self.database])
+
+
+class Execute(Plugin):
+
+    def __enter__(self):
+        if self.runner.script.executable_name:
+            command = ['python', self.runner.script.executable_name]
+            result = external_process.run(command)
+            if result.status != 0:
+                raise exceptions.ScriptError(result)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
