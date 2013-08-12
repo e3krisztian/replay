@@ -25,11 +25,11 @@ class Runner(object):
             self._local_pypi_url)
         self.script = script_from(script)
 
-    def plugin(self, class_):
-        return class_(self.context, self.script)
+    def plugin(self, plugin_class):
+        return plugin_class(self.context, self.script)
 
-    def run_with(self, setup_plugins):
-        main.run_with(setup_plugins, self.context, self.script)
+    def run_with(self, plugins):
+        main.run_with(plugins, self.context, self.script)
 
     @property
     def _local_pypi_url(self):
