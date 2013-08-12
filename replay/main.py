@@ -6,7 +6,8 @@ import replay.runner
 import replay.script
 import replay.plugins
 
-TEMPORARY_DIRECTORY = replay.plugins.WorkingDirectory.TEMPORARY_DIRECTORY
+
+TEMPORARY_DIRECTORY = replay.plugins.TemporaryDirectory
 
 
 def get_virtualenv_parent_dir():
@@ -77,7 +78,9 @@ def main():
     runner = replay.runner.Runner(context, script, script_name)
 
     setup_plugins = (
-        replay.plugins.WorkingDirectory,
+        (replay.plugins.TemporaryDirectory
+            if args.script_working_directory is TEMPORARY_DIRECTORY
+            else replay.plugins.WorkingDirectory),
         replay.plugins.DataStore,
         replay.plugins.VirtualEnv,
         replay.plugins.Postgres

@@ -37,7 +37,45 @@ class Plugin(object):
         return self.runner.script.has_option(option)
 
 
-class WorkingDirectory(Plugin):
+class _WorkingDirectoryPlugin(Plugin):
+
+    '''I am a base class helping to implement real Plugins \
+    that ensure that the scripts run in a clean directory, \
+    and also clean up after them.
+    '''
+
+    def __init__(self, runner):
+        super(_WorkingDirectoryPlugin, self).__init__(runner)
+        self.context = runner.context
+        self.original_working_directory = os.getcwd()
+        self.working_directory = None
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        log.debug('%s: __exit__', self.__class__.__name__)
+        try:
+            self._change_to_directory(self.original_working_directory)
+        finally:
+            log.debug(
+                '%s: rmtree %s',
+                self.__class__.__name__,
+                self.working_directory)
+            shutil.rmtree(self.working_directory)
+
+    def _change_to_directory(self, directory):
+        log.debug('%s: chdir %s', self.__class__.__name__, directory)
+        os.chdir(directory)
+
+    def _copy_scripts_to(self, destination):
+        source = self.runner.script.dir
+        log.debug(
+            '%s: copytree %s -> %s',
+            self.__class__.__name__,
+            source,
+            destination)
+        shutil.copytree(source, destination)
+
+
+class WorkingDirectory(_WorkingDirectoryPlugin):
 
     '''I ensure that the scripts run in a clean directory, \
     and also clean up after them.
@@ -45,33 +83,36 @@ class WorkingDirectory(Plugin):
     The directory to run in is taken from the context.
     '''
 
-    TEMPORARY_DIRECTORY = object()
-
-    def __init__(self, runner):
-        super(WorkingDirectory, self).__init__(runner)
-        self.context = runner.context
-        self.original_working_directory = os.getcwd()
-
-        # make working_directory
-        if self.context.working_directory is self.TEMPORARY_DIRECTORY:
-            self.working_directory = tempfile.mkdtemp()
-        else:
-            self.working_directory = self.context.working_directory.path
-            os.mkdir(self.working_directory)
-
     def __enter__(self):
         log.debug('WorkingDirectory: __enter__')
-        log.debug('WorkingDirectory: CD %s', self.working_directory)
-        os.chdir(self.working_directory)
+        log.debug('WorkingDirectory: copy script directory')
+        self.working_directory = self.context.working_directory.path
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        log.debug('WorkingDirectory: __exit__')
-        try:
-            log.debug('WorkingDirectory: CD %s', self.original_working_directory)
-            os.chdir(self.original_working_directory)
-        finally:
-            log.debug('WorkingDirectory: RM %s', self.working_directory)
-            shutil.rmtree(self.working_directory)
+        self._copy_scripts_to(self.working_directory)
+        self._change_to_directory(self.working_directory)
+
+
+class TemporaryDirectory(_WorkingDirectoryPlugin):
+
+    '''I ensure that the scripts run in a clean directory, \
+    and also clean up after them.
+
+    The directory to run in is a new temporary directory.
+    '''
+
+    def __enter__(self):
+        log.debug('TemporaryDirectory: __enter__')
+        log.debug('TemporaryDirectory: copy script directory')
+        self.working_directory = tempfile.mkdtemp()
+        # real_working_directory is one directory further
+        # the reason is: copytree requires a non-existing target
+        # the choice here was between:
+        # 1. add an extra directory
+        # 2. reimplement a copytree to work with already existing target
+        real_working_directory = os.path.join(self.working_directory, '-')
+
+        self._copy_scripts_to(real_working_directory)
+        self._change_to_directory(real_working_directory)
 
 
 class DataStore(Plugin):

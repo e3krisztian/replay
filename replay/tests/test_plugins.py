@@ -76,26 +76,35 @@ class TestWorkingDirectory(unittest.TestCase):
         self.run_plugin()
         self.assertEqual(self.orig_working_directory, os.getcwd())
 
-    def run_plugin(self):
+    @within_temp_dir
+    def test_copy_of_scripts_directory_is_in_working_directory(self):
+        DEFAULT_FIXTURE_KNOWN_FILE = 'scripts/import_roman.py'
+
+        def run_in_directory():
+            print os.getcwd(), os.listdir('.')
+            self.assertTrue(os.path.exists(DEFAULT_FIXTURE_KNOWN_FILE))
+        self.run_plugin(run_in_directory)
+
+    def run_plugin(self, run_in_directory=(lambda: False)):
         f = fixtures.Runner('{}')
         self.orig_working_directory = os.getcwd()
 
         with plugins.WorkingDirectory(f.runner):
             self.script_working_directory = os.getcwd()
-            self.assertTrue(os.path.isdir(self.script_working_directory))
+            run_in_directory()
 
 
-class TestWorkingDirectory_temporary_directory(TestWorkingDirectory):
+class TestTemporaryDirectory(TestWorkingDirectory):
 
-    def run_plugin(self):
+    def run_plugin(self, run_in_directory=(lambda: False)):
         f = fixtures.Runner('{}')
         f.context.working_directory = (
-            plugins.WorkingDirectory.TEMPORARY_DIRECTORY)
+            plugins.TemporaryDirectory)
         self.orig_working_directory = os.getcwd()
 
-        with plugins.WorkingDirectory(f.runner):
+        with plugins.TemporaryDirectory(f.runner):
             self.script_working_directory = os.getcwd()
-            self.assertTrue(os.path.isdir(self.script_working_directory))
+            run_in_directory()
 
 
 class TestVirtualEnv(unittest.TestCase):
