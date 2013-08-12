@@ -24,7 +24,7 @@ class TestDataStore(unittest.TestCase):
             ''')
 
         with self.assertRaises(exceptions.MissingInput):
-            plugins.DataStore(f.runner).__enter__()
+            f.plugin(plugins.DataStore).__enter__()
 
     @within_temp_dir
     def test_outputs_are_uploaded_to_datastore(self):
@@ -34,7 +34,7 @@ class TestDataStore(unittest.TestCase):
                 - an output file: /output/datastore/path
             ''')
 
-        with plugins.DataStore(f.runner):
+        with f.plugin(plugins.DataStore):
             (fspath.working_directory() / 'an output file').content = 'data'
 
         self.assertEqual(
@@ -50,7 +50,7 @@ class TestDataStore(unittest.TestCase):
             ''')
 
         with self.assertRaises(exceptions.MissingOutput):
-            with plugins.DataStore(f.runner):
+            with f.plugin(plugins.DataStore):
                 pass
 
 
@@ -89,7 +89,7 @@ class TestWorkingDirectory(unittest.TestCase):
         f = fixtures.Runner('{}')
         self.orig_working_directory = os.getcwd()
 
-        with plugins.WorkingDirectory(f.runner):
+        with f.plugin(plugins.WorkingDirectory):
             self.script_working_directory = os.getcwd()
             run_in_directory()
 
@@ -102,7 +102,7 @@ class TestTemporaryDirectory(TestWorkingDirectory):
             plugins.TemporaryDirectory)
         self.orig_working_directory = os.getcwd()
 
-        with plugins.TemporaryDirectory(f.runner):
+        with f.plugin(plugins.TemporaryDirectory):
             self.script_working_directory = os.getcwd()
             run_in_directory()
 
@@ -117,7 +117,7 @@ class TestPythonDependencies(unittest.TestCase):
             ''')
         virtualenv_parent_dir = f.context.virtualenv_parent_dir
 
-        plugin = plugins.PythonDependencies(f.runner)
+        plugin = f.plugin(plugins.PythonDependencies)
         with plugin:
             virtualenv_dir = virtualenv_parent_dir / plugin.virtualenv_name
 
@@ -131,8 +131,8 @@ class TestPythonDependencies(unittest.TestCase):
             ''')
         virtualenv_parent_dir = f.context.virtualenv_parent_dir
 
-        with plugins.PythonDependencies(f.runner):
-            plugin = plugins.PythonDependencies(f.runner)
+        with f.plugin(plugins.PythonDependencies):
+            plugin = f.plugin(plugins.PythonDependencies)
             with plugin:
                 virtualenv_dir = virtualenv_parent_dir / plugin.virtualenv_name
 
@@ -145,7 +145,7 @@ class TestPythonDependencies(unittest.TestCase):
             python dependencies:
                 - roman==2.0.0
             ''')
-        plugin = plugins.PythonDependencies(f.runner)
+        plugin = f.plugin(plugins.PythonDependencies)
         with plugin:
             python = plugin.virtualenv_dir / 'bin/python'
 
@@ -165,7 +165,7 @@ class TestPythonDependencies(unittest.TestCase):
                 - remedy_for_all_problems==0.42.0
             ''')
         with self.assertRaises(exceptions.MissingPythonDependency):
-            plugins.PythonDependencies(f.runner).__enter__()
+            f.plugin(plugins.PythonDependencies).__enter__()
 
     @within_temp_dir
     def test_module_in_virtualenv_is_available(self):
@@ -179,7 +179,7 @@ class TestPythonDependencies(unittest.TestCase):
         cmdspec = [
             'python', '-c', 'import roman; print(roman.toRoman(23))']
 
-        with plugins.PythonDependencies(f.runner):
+        with f.plugin(plugins.PythonDependencies):
             result = external_process.run(cmdspec)
 
         # if result.status: print(result)
@@ -192,7 +192,7 @@ class Test_PythonDependencies_virtualenv_name(unittest.TestCase):
         f = fixtures.Runner('{}')
         self.assertEqual(
             '_replay_d41d8cd98f00b204e9800998ecf8427e',
-            plugins.PythonDependencies(f.runner).virtualenv_name)
+            f.plugin(plugins.PythonDependencies).virtualenv_name)
 
     def test_virtualenv_name_depends_on_required_python_packages(self):
         f = fixtures.Runner(
@@ -204,7 +204,7 @@ class Test_PythonDependencies_virtualenv_name(unittest.TestCase):
             ''')
         self.assertEqual(
             '_replay_e8a8bbe2f9fd4e9286aeedab2a5009e2',
-            plugins.PythonDependencies(f.runner).virtualenv_name)
+            f.plugin(plugins.PythonDependencies).virtualenv_name)
 
     def test_python_package_order_does_not_matter(self):
         f1 = fixtures.Runner(
@@ -222,8 +222,8 @@ class Test_PythonDependencies_virtualenv_name(unittest.TestCase):
                 - a
             ''')
 
-        ve_name1 = plugins.PythonDependencies(f1.runner).virtualenv_name
-        ve_name2 = plugins.PythonDependencies(f2.runner).virtualenv_name
+        ve_name1 = f1.plugin(plugins.PythonDependencies).virtualenv_name
+        ve_name2 = f2.plugin(plugins.PythonDependencies).virtualenv_name
         self.assertEqual(ve_name1, ve_name2)
         self.assertEqual('_replay_e8a8bbe2f9fd4e9286aeedab2a5009e2', ve_name1)
 
@@ -250,10 +250,10 @@ class TestPostgres(unittest.TestCase):
 
     def test_database_name(self):
         f = self.fixture
-        plugin = plugins.Postgres(f.runner)
+        plugin = f.plugin(plugins.Postgres)
         timestamp = plugin.timestamp
 
-        self.assertIn(f.runner.script_name, plugin.database)
+        self.assertIn(f.script.name, plugin.database)
         self.assertIn(getpass.getuser(), plugin.database)
         self.assertIn(timestamp, plugin.database)
         self.assertEqual(timestamp, plugin.timestamp)
@@ -261,8 +261,8 @@ class TestPostgres(unittest.TestCase):
     def test_database_name_is_unique(self):
         f = self.fixture
 
-        plugin1 = plugins.Postgres(f.runner)
-        plugin2 = plugins.Postgres(f.runner)
+        plugin1 = f.plugin(plugins.Postgres)
+        plugin2 = f.plugin(plugins.Postgres)
 
         self.assertLess(plugin1.timestamp, plugin2.timestamp)
         self.assertLess(plugin1.database, plugin2.database)
@@ -288,13 +288,13 @@ class TestPostgres(unittest.TestCase):
         self.assertNotIn(database, result.stdout)
 
     def test_psql_connects_to_database(self):
-        plugin = plugins.Postgres(self.fixture.runner)
+        plugin = self.fixture.plugin(plugins.Postgres)
 
         with plugin:
             self.check_psql_default_database(plugin.database)
 
     def test_database_dropped_after_block(self):
-        plugin = plugins.Postgres(self.fixture.runner)
+        plugin = self.fixture.plugin(plugins.Postgres)
 
         with plugin:
             pass
@@ -304,7 +304,7 @@ class TestPostgres(unittest.TestCase):
     def test_environment_variable_restored(self):
         orig_environ = os.environ.copy()
 
-        with plugins.Postgres(self.fixture.runner):
+        with self.fixture.plugin(plugins.Postgres):
             pass
 
         self.assertDictEqual(orig_environ, os.environ.copy())
@@ -316,7 +316,7 @@ class TestPostgres(unittest.TestCase):
                 - uses text files!
             ''')
 
-        plugin = plugins.Postgres(f.runner)
+        plugin = f.plugin(plugins.Postgres)
 
         with plugin:
             self.assertFalse(plugin.enabled)
@@ -331,7 +331,7 @@ class TestPostgres(unittest.TestCase):
                 - debug
             ''')
 
-        plugin = plugins.Postgres(f.runner)
+        plugin = f.plugin(plugins.Postgres)
 
         try:
             with plugin:

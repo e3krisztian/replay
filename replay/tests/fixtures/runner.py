@@ -1,5 +1,6 @@
 from externals.fake import Fake as MemoryStore
-import replay.runner as runner
+from replay import runner
+from replay import main
 import pkg_resources
 from replay.tests.script import script_from
 from replay.tests.path2url import path2url
@@ -23,7 +24,13 @@ class Runner(object):
             working_directory() / 'temp',
             self._local_pypi_url)
         self.script = script_from(script)
-        self.runner = runner.Runner(self.context, self.script)
+        # self.runner = runner.Runner(self.context, self.script)
+
+    def plugin(self, class_):
+        return class_(self.context, self.script)
+
+    def run_with(self, setup_plugins):
+        main.run_with(setup_plugins, self.context, self.script)
 
     @property
     def _local_pypi_url(self):

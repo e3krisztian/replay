@@ -61,6 +61,15 @@ def get_script_working_directory(args):
     return fspath.FsPath(args.script_working_directory)
 
 
+def run_with(setup_plugins, context, script):
+    '''I run scripts (maybe in isolation)'''
+
+    if setup_plugins:
+        plugin = setup_plugins[0](context, script)
+        with plugin:
+            run_with(setup_plugins[1:], context, script)
+
+
 def main():
     args = parse_args(sys.argv[1:])
 
@@ -75,8 +84,6 @@ def main():
     with open(args.script_path) as script_file:
         script = replay.script.Script(script_dir, script_name, script_file)
 
-    runner = replay.runner.Runner(context, script)
-
     setup_plugins = (
         (replay.plugins.TemporaryDirectory
             if args.script_working_directory is TEMPORARY_DIRECTORY
@@ -87,7 +94,7 @@ def main():
         replay.plugins.Execute
         )
 
-    runner.run_with(setup_plugins)
+    run_with(setup_plugins, context, script)
 
 
 if __name__ == '__main__':
