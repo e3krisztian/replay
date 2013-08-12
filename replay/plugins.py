@@ -19,7 +19,7 @@ class Plugin(object):
     '''I am a context manager, I can perform setup tasks \
     and also provide cleanup for Runner
 
-    My operation is usually driven by runner.context & runner.script
+    My operation is usually driven by one of context & script
     '''
 
     __metaclass__ = abc.ABCMeta

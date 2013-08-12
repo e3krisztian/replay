@@ -2,7 +2,7 @@ import argparse
 from externals import fspath
 import os.path
 import sys
-import replay.runner
+import replay.context
 import replay.script
 import replay.plugins
 
@@ -73,7 +73,7 @@ def run_with(setup_plugins, context, script):
 def main():
     args = parse_args(sys.argv[1:])
 
-    context = replay.runner.Context(
+    context = replay.context.Context(
         fspath.FsPath(args.datastore),
         fspath.FsPath(args.virtualenv_parent_directory),
         get_script_working_directory(args))

@@ -228,16 +228,6 @@ class Test_PythonDependencies_virtualenv_name(unittest.TestCase):
         self.assertEqual('_replay_e8a8bbe2f9fd4e9286aeedab2a5009e2', ve_name1)
 
 
-#   postgresql:  (database name {USER}_{script_name}_{datetime})
-#       before_execute: create database
-#       after_execute: drop database (unless debugging & explicitly requested)
-#     NOTE:
-#           runner should store script_name
-#           should tests be configurable to run/not run database tests?
-
-
-# within Postgres() block psql connects to the database of the Postgres plugin
-
 class TestPostgres(unittest.TestCase):
 
     @property
