@@ -23,7 +23,7 @@ class Runner(object):
             working_directory() / 'temp',
             self._local_pypi_url)
         self.script = script_from(script)
-        self.runner = runner.Runner(self.context, self.script, 'test_script')
+        self.runner = runner.Runner(self.context, self.script)
 
     @property
     def _local_pypi_url(self):

@@ -75,7 +75,7 @@ def main():
     with open(args.script_path) as script_file:
         script = replay.script.Script(script_dir, script_name, script_file)
 
-    runner = replay.runner.Runner(context, script, script_name)
+    runner = replay.runner.Runner(context, script)
 
     setup_plugins = (
         (replay.plugins.TemporaryDirectory

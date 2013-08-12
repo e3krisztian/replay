@@ -23,7 +23,7 @@ class Test_Runner(unittest.TestCase):
             MemoryStore(),
             fspath.working_directory() / '.virtualenvs',
             (fspath.working_directory() / 'temp').path)
-        m.Runner(context, script_from('{}'), 'minimal')
+        m.Runner(context, script_from('{}'))
 
 
 def get_plugin(n, call_trace):

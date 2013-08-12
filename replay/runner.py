@@ -21,10 +21,10 @@ class Runner(object):
 
     '''I run scripts in isolation'''
 
-    def __init__(self, context, script, script_name):
+    def __init__(self, context, script):
         self.context = context
         self.script = script
-        self.script_name = script_name
+        self.script_name = script.name
 
     def run_with(self, setup_plugins):
         if setup_plugins:
