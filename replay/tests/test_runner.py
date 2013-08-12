@@ -49,7 +49,7 @@ class Test_Runner_run_with(unittest.TestCase):
     PLUGINS = (
         plugins.WorkingDirectory,
         plugins.DataStore,
-        plugins.VirtualEnv
+        plugins.PythonDependencies
         )
 
     @within_temp_dir

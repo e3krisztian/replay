@@ -107,7 +107,7 @@ class TestTemporaryDirectory(TestWorkingDirectory):
             run_in_directory()
 
 
-class TestVirtualEnv(unittest.TestCase):
+class TestPythonDependencies(unittest.TestCase):
 
     @within_temp_dir
     def test_virtualenv_is_created_in_context_specified_dir(self):
@@ -117,7 +117,7 @@ class TestVirtualEnv(unittest.TestCase):
             ''')
         virtualenv_parent_dir = f.context.virtualenv_parent_dir
 
-        plugin = plugins.VirtualEnv(f.runner)
+        plugin = plugins.PythonDependencies(f.runner)
         with plugin:
             virtualenv_dir = virtualenv_parent_dir / plugin.virtualenv_name
 
@@ -131,8 +131,8 @@ class TestVirtualEnv(unittest.TestCase):
             ''')
         virtualenv_parent_dir = f.context.virtualenv_parent_dir
 
-        with plugins.VirtualEnv(f.runner):
-            plugin = plugins.VirtualEnv(f.runner)
+        with plugins.PythonDependencies(f.runner):
+            plugin = plugins.PythonDependencies(f.runner)
             with plugin:
                 virtualenv_dir = virtualenv_parent_dir / plugin.virtualenv_name
 
@@ -145,7 +145,7 @@ class TestVirtualEnv(unittest.TestCase):
             python dependencies:
                 - roman==2.0.0
             ''')
-        plugin = plugins.VirtualEnv(f.runner)
+        plugin = plugins.PythonDependencies(f.runner)
         with plugin:
             python = plugin.virtualenv_dir / 'bin/python'
 
@@ -165,7 +165,7 @@ class TestVirtualEnv(unittest.TestCase):
                 - remedy_for_all_problems==0.42.0
             ''')
         with self.assertRaises(exceptions.MissingPythonDependency):
-            plugins.VirtualEnv(f.runner).__enter__()
+            plugins.PythonDependencies(f.runner).__enter__()
 
     @within_temp_dir
     def test_module_in_virtualenv_is_available(self):
@@ -179,20 +179,20 @@ class TestVirtualEnv(unittest.TestCase):
         cmdspec = [
             'python', '-c', 'import roman; print(roman.toRoman(23))']
 
-        with plugins.VirtualEnv(f.runner):
+        with plugins.PythonDependencies(f.runner):
             result = external_process.run(cmdspec)
 
         # if result.status: print(result)
         self.assertEqual('XXIII', result.stdout.rstrip())
 
 
-class Test_VirtualEnv_virtualenv_name(unittest.TestCase):
+class Test_PythonDependencies_virtualenv_name(unittest.TestCase):
 
     def test_empty_virtualenv_name(self):
         f = fixtures.Runner('{}')
         self.assertEqual(
             '_replay_d41d8cd98f00b204e9800998ecf8427e',
-            plugins.VirtualEnv(f.runner).virtualenv_name)
+            plugins.PythonDependencies(f.runner).virtualenv_name)
 
     def test_virtualenv_name_depends_on_required_python_packages(self):
         f = fixtures.Runner(
@@ -204,7 +204,7 @@ class Test_VirtualEnv_virtualenv_name(unittest.TestCase):
             ''')
         self.assertEqual(
             '_replay_e8a8bbe2f9fd4e9286aeedab2a5009e2',
-            plugins.VirtualEnv(f.runner).virtualenv_name)
+            plugins.PythonDependencies(f.runner).virtualenv_name)
 
     def test_python_package_order_does_not_matter(self):
         f1 = fixtures.Runner(
@@ -222,8 +222,8 @@ class Test_VirtualEnv_virtualenv_name(unittest.TestCase):
                 - a
             ''')
 
-        ve_name1 = plugins.VirtualEnv(f1.runner).virtualenv_name
-        ve_name2 = plugins.VirtualEnv(f2.runner).virtualenv_name
+        ve_name1 = plugins.PythonDependencies(f1.runner).virtualenv_name
+        ve_name2 = plugins.PythonDependencies(f2.runner).virtualenv_name
         self.assertEqual(ve_name1, ve_name2)
         self.assertEqual('_replay_e8a8bbe2f9fd4e9286aeedab2a5009e2', ve_name1)
 

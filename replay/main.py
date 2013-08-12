@@ -82,7 +82,7 @@ def main():
             if args.script_working_directory is TEMPORARY_DIRECTORY
             else replay.plugins.WorkingDirectory),
         replay.plugins.DataStore,
-        replay.plugins.VirtualEnv,
+        replay.plugins.PythonDependencies,
         replay.plugins.Postgres
         )
 

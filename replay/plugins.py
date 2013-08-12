@@ -180,10 +180,10 @@ class _EnvironKeyState(object):
             environ[key] = self.value
 
 
-class VirtualEnv(Plugin):
+class PythonDependencies(Plugin):
 
     def __init__(self, runner):
-        super(VirtualEnv, self).__init__(runner)
+        super(PythonDependencies, self).__init__(runner)
         self.virtualenv_name = '_replay_' + self._package_hash()
         self.virtualenv_dir = (
             self.runner.context.virtualenv_parent_dir / self.virtualenv_name)
