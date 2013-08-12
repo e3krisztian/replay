@@ -10,7 +10,7 @@ class Script(object):
     python_dependencies = [str]
 
     def __init__(self, dir, script_file):
-        self._raw_spec = raw_spec = yaml.load(script_file)
+        self._raw_spec = raw_spec = yaml.safe_load(script_file)
         self.dir = dir
         self.inputs = raw_spec.get('inputs', [])
         self.outputs = raw_spec.get('outputs', [])
