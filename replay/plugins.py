@@ -32,9 +32,8 @@ class Plugin(object):
     def __enter__(self):  # pragma: nocover
         pass
 
-    @abc.abstractmethod
-    def __exit__(self, exc_type, exc_value, traceback):  # pragma: nocover
-        pass
+    def __exit__(self, exc_type, exc_value, traceback):
+        log.debug('%s: __exit__', self.__class__.__name__)
 
     def has_option(self, option):
         return self.script.has_option(option)
@@ -67,15 +66,6 @@ class _WorkingDirectoryPlugin(Plugin):
         log.debug('%s: chdir %s', self.__class__.__name__, directory)
         os.chdir(directory)
 
-    def _copy_scripts_to(self, destination):
-        source = self.script.dir
-        log.debug(
-            '%s: copytree %s -> %s',
-            self.__class__.__name__,
-            source,
-            destination)
-        shutil.copytree(source, destination)
-
 
 class WorkingDirectory(_WorkingDirectoryPlugin):
 
@@ -87,10 +77,8 @@ class WorkingDirectory(_WorkingDirectoryPlugin):
 
     def __enter__(self):
         log.debug('WorkingDirectory: __enter__')
-        log.debug('WorkingDirectory: copy script directory')
         self.working_directory = self.context.working_directory.path
-
-        self._copy_scripts_to(self.working_directory)
+        os.makedirs(self.working_directory)
         self._change_to_directory(self.working_directory)
 
 
@@ -104,17 +92,35 @@ class TemporaryDirectory(_WorkingDirectoryPlugin):
 
     def __enter__(self):
         log.debug('TemporaryDirectory: __enter__')
-        log.debug('TemporaryDirectory: copy script directory')
         self.working_directory = tempfile.mkdtemp()
-        # real_working_directory is one directory further
-        # the reason is: copytree requires a non-existing target
-        # the choice here was between:
-        # 1. add an extra directory
-        # 2. reimplement a copytree to work with already existing target
-        real_working_directory = os.path.join(self.working_directory, '-')
+        self._change_to_directory(self.working_directory)
 
-        self._copy_scripts_to(real_working_directory)
-        self._change_to_directory(real_working_directory)
+
+class CopyScript(Plugin):
+
+    '''I copy the scripts to the working directory for execution there
+
+    I am pretty special, in a way, that I must immediately follow either of
+    WorkingDirectory or TemporaryDirectory in the plugin list.
+    '''
+
+    def __enter__(self):
+        source = self.script.dir
+        destination = os.getcwd()
+        log.debug('CopyScript: %s -> %s', source, destination)
+        self._copy_tree(source, destination)
+
+    def _copy_tree(self, source, destination):
+        for child in os.listdir(source):
+            s = os.path.join(source, child)
+            d = os.path.join(destination, child)
+            if os.path.isdir(s):
+                log.debug('CopyScript: mkdir %s', d)
+                os.mkdir(d)
+                self._copy_tree(s, d)
+            else:
+                log.debug('CopyScript: cp %s %s', s, d)
+                shutil.copy2(s, d)
 
 
 class _DataStorePlugin(Plugin):

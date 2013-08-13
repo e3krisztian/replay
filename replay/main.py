@@ -88,6 +88,7 @@ def main():
         (replay.plugins.TemporaryDirectory
             if args.script_working_directory is TEMPORARY_DIRECTORY
             else replay.plugins.WorkingDirectory),
+        replay.plugins.CopyScript,
         replay.plugins.Inputs,
         replay.plugins.Outputs,
         replay.plugins.PythonDependencies,

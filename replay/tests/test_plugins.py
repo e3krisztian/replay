@@ -94,27 +94,17 @@ class TestWorkingDirectory(unittest.TestCase):
         self.run_plugin()
         self.assertEqual(self.orig_working_directory, os.getcwd())
 
-    @within_temp_dir
-    def test_copy_of_scripts_directory_is_in_working_directory(self):
-        DEFAULT_FIXTURE_KNOWN_FILE = 'scripts/import_roman.py'
-
-        def run_in_directory():
-            print os.getcwd(), os.listdir('.')
-            self.assertTrue(os.path.exists(DEFAULT_FIXTURE_KNOWN_FILE))
-        self.run_plugin(run_in_directory)
-
-    def run_plugin(self, run_in_directory=(lambda: False)):
+    def run_plugin(self):
         f = fixtures.Runner('{}')
         self.orig_working_directory = os.getcwd()
 
         with f.plugin(plugins.WorkingDirectory):
             self.script_working_directory = os.getcwd()
-            run_in_directory()
 
 
 class TestTemporaryDirectory(TestWorkingDirectory):
 
-    def run_plugin(self, run_in_directory=(lambda: False)):
+    def run_plugin(self):
         f = fixtures.Runner('{}')
         f.context.working_directory = (
             plugins.TemporaryDirectory)
@@ -122,7 +112,17 @@ class TestTemporaryDirectory(TestWorkingDirectory):
 
         with f.plugin(plugins.TemporaryDirectory):
             self.script_working_directory = os.getcwd()
-            run_in_directory()
+
+
+class TestCopyScript(unittest.TestCase):
+
+    @within_temp_dir
+    def test_copy_of_scripts_directory_is_in_working_directory(self):
+        DEFAULT_FIXTURE_KNOWN_FILE = 'scripts/import_roman.py'
+        f = fixtures.Runner('{}')
+
+        with f.plugin(plugins.CopyScript):
+            self.assertTrue(os.path.exists(DEFAULT_FIXTURE_KNOWN_FILE))
 
 
 class TestPythonDependencies(unittest.TestCase):

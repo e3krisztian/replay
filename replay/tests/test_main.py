@@ -66,6 +66,7 @@ class Test_run_with(unittest.TestCase):
 
     PLUGINS = (
         plugins.WorkingDirectory,
+        plugins.CopyScript,
         plugins.Inputs,
         plugins.Outputs,
         plugins.PythonDependencies,
