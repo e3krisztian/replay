@@ -13,7 +13,7 @@ from replay import plugins
 from replay import exceptions
 
 
-class TestDataStore(unittest.TestCase):
+class TestInputs(unittest.TestCase):
 
     @within_temp_dir
     def test_input_file_missing_is_error(self):
@@ -24,7 +24,25 @@ class TestDataStore(unittest.TestCase):
             ''')
 
         with self.assertRaises(exceptions.MissingInput):
-            f.plugin(plugins.DataStore).__enter__()
+            f.plugin(plugins.Inputs).__enter__()
+
+    @within_temp_dir
+    def test_inputs_are_downloaded_from_datastore(self):
+        f = fixtures.Runner(
+            '''\
+            inputs:
+                - an input file: input/datastore/path
+            ''')
+
+        (f.datastore / 'input/datastore/path').content = 'hello'
+
+        with f.plugin(plugins.Inputs):
+            self.assertEqual(
+                'hello',
+                (fspath.working_directory() / 'an input file').content)
+
+
+class TestOutputs(unittest.TestCase):
 
     @within_temp_dir
     def test_outputs_are_uploaded_to_datastore(self):
@@ -34,7 +52,7 @@ class TestDataStore(unittest.TestCase):
                 - an output file: /output/datastore/path
             ''')
 
-        with f.plugin(plugins.DataStore):
+        with f.plugin(plugins.Outputs):
             (fspath.working_directory() / 'an output file').content = 'data'
 
         self.assertEqual(
@@ -50,7 +68,7 @@ class TestDataStore(unittest.TestCase):
             ''')
 
         with self.assertRaises(exceptions.MissingOutput):
-            with f.plugin(plugins.DataStore):
+            with f.plugin(plugins.Outputs):
                 pass
 
 

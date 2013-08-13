@@ -117,7 +117,18 @@ class TemporaryDirectory(_WorkingDirectoryPlugin):
         self._change_to_directory(real_working_directory)
 
 
-class DataStore(Plugin):
+class _DataStorePlugin(Plugin):
+
+    def _file_pairs(self, copy_spec):
+        datastore = self.context.datastore
+        working_directory = fspath.working_directory()
+
+        for spec in copy_spec:
+            for local_file, ds_file in spec.iteritems():
+                yield (working_directory / local_file), (datastore / ds_file)
+
+
+class Inputs(_DataStorePlugin):
 
     '''I ensure that inputs are available from DataStore and outputs are saved.
     '''
@@ -127,37 +138,40 @@ class DataStore(Plugin):
         self._download_inputs()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._check_outputs()
-        self._upload_outputs()
-
-    # helpers
-    def _file_pairs(self, copy_spec):
-        datastore = self.context.datastore
-        working_directory = fspath.working_directory()
-
-        for spec in copy_spec:
-            for local_file, ds_file in spec.iteritems():
-                yield (working_directory / local_file), (datastore / ds_file)
+        pass
 
     def _input_file_pairs(self):
         return self._file_pairs(self.script.inputs)
-
-    def _output_file_pairs(self):
-        return self._file_pairs(self.script.outputs)
 
     def _check_inputs(self):
         for local, datastore in self._input_file_pairs():
             if not datastore.exists():
                 raise exceptions.MissingInput(datastore)
 
+    def _download_inputs(self):
+        for local, datastore in self._input_file_pairs():
+            datastore.copy_to(local)
+
+
+class Outputs(_DataStorePlugin):
+
+    '''I ensure outputs are saved to DataStore.
+    '''
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._check_outputs()
+        self._upload_outputs()
+
+    def _output_file_pairs(self):
+        return self._file_pairs(self.script.outputs)
+
     def _check_outputs(self):
         for local, datastore in self._output_file_pairs():
             if not local.exists():
                 raise exceptions.MissingOutput(local)
-
-    def _download_inputs(self):
-        for local, datastore in self._input_file_pairs():
-            datastore.copy_to(local)
 
     def _upload_outputs(self):
         for local, datastore in self._output_file_pairs():
