@@ -3,7 +3,6 @@ from externals import fspath
 import os.path
 import sys
 import replay.context
-import replay.script
 import replay.plugins
 
 
@@ -78,7 +77,7 @@ def main():
                 if args.script_working_directory is TEMPORARY_DIRECTORY
                 else replay.plugins.WorkingDirectory(context)]
             + [replay.plugins.CopyScript(script_dir)]
-            + context.load_plugins(script_file))
+            + list(context.load_plugins(script_file)))
 
     context.run(plugins)
 

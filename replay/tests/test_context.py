@@ -1,6 +1,7 @@
 import unittest
 from replay.tests import fixtures
 from replay import plugins
+from StringIO import StringIO
 
 
 class Test_run(unittest.TestCase):
@@ -46,29 +47,29 @@ class Test_run(unittest.TestCase):
 XPlugin = plugins.Plugin
 
 
-class Test_resolve_plugin_class(unittest.TestCase):
+def context():
+    return fixtures.PluginContext().context
 
-    @property
-    def context(self):
-        return fixtures.PluginContext().context
+
+class Test_resolve_plugin_class(unittest.TestCase):
 
     def test_resolve_by_dotted_name(self):
         plugin_name = 'replay.tests.test_context.XPlugin'
 
-        plugin_class = self.context.resolve_plugin_class(plugin_name)
+        plugin_class = context().resolve_plugin_class(plugin_name)
         self.assertIs(XPlugin, plugin_class)
 
     def test_nonexistent_plugin_raises_ImportError(self):
         plugin_name = 'replay.tests.test_context.NONEXISTENTPlugin'
 
         with self.assertRaises(ImportError):
-            self.context.resolve_plugin_class(plugin_name)
+            context().resolve_plugin_class(plugin_name)
 
     def test_non_class_raises_ValueError(self):
         plugin_name = 'replay.tests.test_context.plugins'
 
         with self.assertRaises(ValueError):
-            self.context.resolve_plugin_class(plugin_name)
+            context().resolve_plugin_class(plugin_name)
 
     def test_non_plugin_raises_ValueError(self):
         plugin_name = '{}.{}'.format(
@@ -76,8 +77,31 @@ class Test_resolve_plugin_class(unittest.TestCase):
             self.__class__.__name__)
 
         with self.assertRaises(ValueError):
-            self.context.resolve_plugin_class(plugin_name)
+            context().resolve_plugin_class(plugin_name)
 
     def test_unqualified_plugin_resolved(self):
-        plugin_class = self.context.resolve_plugin_class('Execute')
+        plugin_class = context().resolve_plugin_class('Execute')
         self.assertIs(plugins.Execute, plugin_class)
+
+
+class Test_load_plugin(unittest.TestCase):
+
+    def test_non_map_yaml_raises_ValueError(self):
+        with self.assertRaises(ValueError):
+            context().load_plugin(['1', '2'])
+
+    def test_non_one_key_map_raises_ValueError(self):
+        with self.assertRaises(ValueError):
+            context().load_plugin(dict(a='1', b='2'))
+
+
+class Test_load_plugins(unittest.TestCase):
+
+    def test_executable_content_raises_ValueError(self):
+        f = StringIO(
+            '''\
+            Execute: !!python/object/new:tuple
+                [[3, 4]]
+            ''')
+        with self.assertRaises(ValueError):
+            list(context().load_plugins(f))

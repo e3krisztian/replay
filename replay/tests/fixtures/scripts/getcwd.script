@@ -1,6 +1,7 @@
 # store the script working directory - for examination in tests
 
-outputs:
+Outputs:
     - working_directory : working_directory
+---
 
-script: getcwd.py
+Execute: getcwd.py

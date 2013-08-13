@@ -1,9 +1,9 @@
 import inspect
 
+import yaml
 import zope.dottedname.resolve as dottedname
 
 from replay import plugins
-import replay.script
 
 
 class Context(object):
@@ -25,21 +25,26 @@ class Context(object):
         self.index_server_url = index_server_url
 
     def load_plugins(self, script_file):
-        script = replay.script.Script(script_file)
-        plugin_classes = [
-            plugins.Inputs,
-            plugins.Outputs,
-            plugins.PythonDependencies,
-            plugins.Postgres,
-            plugins.Execute]
-        return [plugin_class(self, script) for plugin_class in plugin_classes]
+        try:
+            for raw_spec in yaml.load_all(script_file, Loader=yaml.SafeLoader):
+                yield self.load_plugin(raw_spec)
+        except ValueError:
+            raise
+        except Exception as e:
+            raise ValueError(e, 'error in script')
 
-    def run(self, plugins):
-        '''I run scripts in isolation'''
-
-        if plugins:
-            with plugins[0]:
-                self.run(plugins[1:])
+    def load_plugin(self, raw_spec):
+        if not isinstance(raw_spec, dict):
+            msg = 'script is not a mapping from plugin name to attributes'
+            raise ValueError(msg)
+        if len(raw_spec) != 1:
+            msg = (
+                'script contains a plugin spec with multiple keys: '
+                + repr(raw_spec.keys()))
+            raise ValueError(msg)
+        plugin_name, = raw_spec.keys()
+        plugin_class = self.resolve_plugin_class(plugin_name)
+        return plugin_class(self, raw_spec[plugin_name])
 
     def resolve_plugin_class(self, plugin_name):
         try:
@@ -56,3 +61,10 @@ class Context(object):
             raise ValueError('{} is not a Plugin'.format(plugin_name))
 
         return plugin_class
+
+    def run(self, plugins):
+        '''I run scripts in isolation'''
+
+        if plugins:
+            with plugins[0]:
+                self.run(plugins[1:])

@@ -35,9 +35,6 @@ class Plugin(object):
     def __exit__(self, exc_type, exc_value, traceback):
         log.debug('%s: __exit__', self.__class__.__name__)
 
-    def has_option(self, option):
-        return self.script.has_option(option)
-
 
 class _WorkingDirectoryPlugin(Plugin):
 
@@ -151,7 +148,7 @@ class Inputs(_DataStorePlugin):
         pass
 
     def _input_file_pairs(self):
-        return self._file_pairs(self.script.inputs)
+        return self._file_pairs(self.script)
 
     def _check_inputs(self):
         for local, datastore in self._input_file_pairs():
@@ -176,7 +173,7 @@ class Outputs(_DataStorePlugin):
         self._upload_outputs()
 
     def _output_file_pairs(self):
-        return self._file_pairs(self.script.outputs)
+        return self._file_pairs(self.script)
 
     def _check_outputs(self):
         for local, datastore in self._output_file_pairs():
@@ -208,6 +205,7 @@ class PythonDependencies(Plugin):
 
     def __init__(self, context, script):
         super(PythonDependencies, self).__init__(context, script)
+        self.python_dependencies = self.script or []
         self.virtualenv_name = '_replay_' + self._package_hash()
         self.virtualenv_dir = (
             self.context.virtualenv_parent_dir / self.virtualenv_name)
@@ -224,8 +222,7 @@ class PythonDependencies(Plugin):
         self.PATH.restore(os.environ)
 
     def _package_hash(self):
-        python_dependencies = self.script.python_dependencies
-        dependencies = '\n'.join(sorted(python_dependencies))
+        dependencies = '\n'.join(sorted(self.python_dependencies))
         return hashlib.md5(dependencies).hexdigest()
 
     @property
@@ -248,7 +245,7 @@ class PythonDependencies(Plugin):
         #    (e.g. PYTHON_VIRTUALENV)
         #  - specify python interpreter to use (python 2 / 3 / pypy / ...)
         external_process.run(['virtualenv', self.virtualenv_dir.path])
-        python_dependencies = self.script.python_dependencies
+        python_dependencies = self.python_dependencies
         for package_spec in python_dependencies:
             self._install_package(package_spec, self.index_server_url)
 
@@ -258,11 +255,9 @@ class Postgres(Plugin):
     def __init__(self, context, script):
         super(Postgres, self).__init__(context, script)
         self.timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
-        self.enabled = self.has_option('uses psql')
-        self.keep_database = (
-            self.has_option('debug') and self.has_option('keep database'))
-        self.PGDATABASE = _EnvironKeyState(os.environ, 'PGDATABASE')
-        self.script_name = script._raw_spec.get('script name', 'SCRIPT_NAME')
+        self.keep_database = script.get('keep database', False)
+        self.script_name = script.get('script name', 'SCRIPT_NAME')
+        self.PGDATABASE = None
 
     @property
     def database(self):
@@ -272,9 +267,9 @@ class Postgres(Plugin):
             timestamp=self.timestamp)
 
     def __enter__(self):
-        if self.enabled:
-            os.environ['PGDATABASE'] = self.database
-            external_process.run(['createdb', self.database])
+        self.PGDATABASE = _EnvironKeyState(os.environ, 'PGDATABASE')
+        os.environ['PGDATABASE'] = self.database
+        external_process.run(['createdb', self.database])
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.PGDATABASE.restore(os.environ)
@@ -285,11 +280,7 @@ class Postgres(Plugin):
 class Execute(Plugin):
 
     def __enter__(self):
-        if self.script.executable_name:
-            command = ['python', self.script.executable_name]
-            result = external_process.run(command)
-            if result.status != 0:
-                raise exceptions.ScriptError(result)
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        pass
+        command = ['python', self.script]
+        result = external_process.run(command)
+        if result.status != 0:
+            raise exceptions.ScriptError(result)

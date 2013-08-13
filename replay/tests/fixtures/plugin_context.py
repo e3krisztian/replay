@@ -1,7 +1,6 @@
 from externals.fake import Fake as MemoryStore
 from replay import context
 import pkg_resources
-from replay.tests.script import script_from
 from replay.tests.path2url import path2url
 from externals.fspath import working_directory
 import os.path
@@ -9,11 +8,11 @@ import os.path
 
 class PluginContext(object):
 
-    '''I hold a context & script. The context is set up in a way,
+    '''I hold a context and a datastore. The context is set up in a way,
     that by removing the current working directory no residue remains.
     '''
 
-    def __init__(self, script='{}'):
+    def __init__(self, script=None):
         venv_parent_dir = working_directory() / 'replay_virtualenvs'
 
         self.datastore = MemoryStore()
@@ -22,10 +21,8 @@ class PluginContext(object):
             venv_parent_dir,
             working_directory() / 'temp',
             self._local_pypi_url)
-        self.script = script_from(script)
-
-    def plugin(self, plugin_class):
-        return plugin_class(self.context, self.script)
+        if script:
+            self.plugin = list(self.context.load_plugins(script))[0]
 
     @property
     def _local_pypi_url(self):
