@@ -61,15 +61,6 @@ def get_script_working_directory(args):
     return fspath.FsPath(args.script_working_directory)
 
 
-def run_with(setup_plugins, context, script):
-    '''I run scripts (maybe in isolation)'''
-
-    if setup_plugins:
-        plugin = setup_plugins[0](context, script)
-        with plugin:
-            run_with(setup_plugins[1:], context, script)
-
-
 def main():
     args = parse_args(sys.argv[1:])
 
@@ -96,7 +87,7 @@ def main():
         replay.plugins.Execute
         )
 
-    run_with(setup_plugins, context, script)
+    context.run(setup_plugins, script)
 
 
 if __name__ == '__main__':

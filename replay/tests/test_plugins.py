@@ -386,3 +386,16 @@ class Test_EnvironKeyState(unittest.TestCase):
         state.restore(env)
 
         self.assertEqual({'a': 1, 'key': 'value'}, env)
+
+
+class TestExecute(unittest.TestCase):
+
+    @within_temp_dir
+    def test_nonzero_exit_status_is_an_error(self):
+        f = fixtures.Runner(
+            '''\
+            script: scripts/this_script_does_not_exist_should_cause_an_error.py
+            ''')
+
+        with self.assertRaises(exceptions.ScriptError):
+            f.run([plugins.Execute])

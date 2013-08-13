@@ -15,3 +15,11 @@ class Context(object):
         self.virtualenv_parent_dir = virtualenv_parent_dir
         self.working_directory = working_directory
         self.index_server_url = index_server_url
+
+    def run(self, setup_plugins, script):
+        '''I run scripts in isolation'''
+
+        if setup_plugins:
+            plugin = setup_plugins[0](self, script)
+            with plugin:
+                self.run(setup_plugins[1:], script)
