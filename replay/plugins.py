@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 class Plugin(object):
 
     '''I am a context manager, I can perform setup tasks \
-    and also provide cleanup for Runner
+    and also provide cleanup.
 
     My operation is usually driven by one of context & script
     '''

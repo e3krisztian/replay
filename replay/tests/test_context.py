@@ -26,7 +26,7 @@ class Test_run(unittest.TestCase):
             self.get_plugin_class(2, call_trace),
             self.get_plugin_class(3, call_trace))
 
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
             script: scripts/import_roman.py
             ''')

@@ -17,7 +17,7 @@ class TestInputs(unittest.TestCase):
 
     @within_temp_dir
     def test_input_file_missing_is_error(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
             inputs:
                 - missing: missing
@@ -28,7 +28,7 @@ class TestInputs(unittest.TestCase):
 
     @within_temp_dir
     def test_inputs_are_downloaded_from_datastore(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
             inputs:
                 - an input file: input/datastore/path
@@ -46,7 +46,7 @@ class TestOutputs(unittest.TestCase):
 
     @within_temp_dir
     def test_outputs_are_uploaded_to_datastore(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
             outputs:
                 - an output file: /output/datastore/path
@@ -61,7 +61,7 @@ class TestOutputs(unittest.TestCase):
 
     @within_temp_dir
     def test_output_file_missing_is_error(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
             outputs:
                 - missing: missing
@@ -95,7 +95,7 @@ class TestWorkingDirectory(unittest.TestCase):
         self.assertEqual(self.orig_working_directory, os.getcwd())
 
     def run_plugin(self):
-        f = fixtures.Runner('{}')
+        f = fixtures.PluginContext('{}')
         self.orig_working_directory = os.getcwd()
 
         with f.plugin(plugins.WorkingDirectory):
@@ -105,7 +105,7 @@ class TestWorkingDirectory(unittest.TestCase):
 class TestTemporaryDirectory(TestWorkingDirectory):
 
     def run_plugin(self):
-        f = fixtures.Runner('{}')
+        f = fixtures.PluginContext('{}')
         f.context.working_directory = (
             plugins.TemporaryDirectory)
         self.orig_working_directory = os.getcwd()
@@ -119,7 +119,7 @@ class TestCopyScript(unittest.TestCase):
     @within_temp_dir
     def test_copy_of_scripts_directory_is_in_working_directory(self):
         DEFAULT_FIXTURE_KNOWN_FILE = 'scripts/import_roman.py'
-        f = fixtures.Runner('{}')
+        f = fixtures.PluginContext('{}')
 
         with f.plugin(plugins.CopyScript):
             self.assertTrue(os.path.exists(DEFAULT_FIXTURE_KNOWN_FILE))
@@ -129,7 +129,7 @@ class TestPythonDependencies(unittest.TestCase):
 
     @within_temp_dir
     def test_virtualenv_is_created_in_context_specified_dir(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
             python dependencies:
             ''')
@@ -143,7 +143,7 @@ class TestPythonDependencies(unittest.TestCase):
 
     @within_temp_dir
     def test_virtualenv_already_exists_no_error(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
             python dependencies:
             ''')
@@ -158,7 +158,7 @@ class TestPythonDependencies(unittest.TestCase):
 
     @within_temp_dir
     def test_new_virtualenv_has_all_the_required_packages(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
             python dependencies:
                 - roman==2.0.0
@@ -177,7 +177,7 @@ class TestPythonDependencies(unittest.TestCase):
 
     @within_temp_dir
     def test_required_package_not_installed_is_an_error(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
             python dependencies:
                 - remedy_for_all_problems==0.42.0
@@ -187,7 +187,7 @@ class TestPythonDependencies(unittest.TestCase):
 
     @within_temp_dir
     def test_module_in_virtualenv_is_available(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
             python dependencies:
                 - roman==2.0.0
@@ -207,13 +207,13 @@ class TestPythonDependencies(unittest.TestCase):
 class Test_PythonDependencies_virtualenv_name(unittest.TestCase):
 
     def test_empty_virtualenv_name(self):
-        f = fixtures.Runner('{}')
+        f = fixtures.PluginContext('{}')
         self.assertEqual(
             '_replay_d41d8cd98f00b204e9800998ecf8427e',
             f.plugin(plugins.PythonDependencies).virtualenv_name)
 
     def test_virtualenv_name_depends_on_required_python_packages(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
             python dependencies:
                 - a
@@ -225,14 +225,14 @@ class Test_PythonDependencies_virtualenv_name(unittest.TestCase):
             f.plugin(plugins.PythonDependencies).virtualenv_name)
 
     def test_python_package_order_does_not_matter(self):
-        f1 = fixtures.Runner(
+        f1 = fixtures.PluginContext(
             '''\
             python dependencies:
                 - a
                 - roman==2.0.0
                 - pi>=3.14
             ''')
-        f2 = fixtures.Runner(
+        f2 = fixtures.PluginContext(
             '''\
             python dependencies:
                 - pi>=3.14
@@ -250,7 +250,7 @@ class TestPostgres(unittest.TestCase):
 
     @property
     def fixture(self):
-        return fixtures.Runner(
+        return fixtures.PluginContext(
             '''\
             options:
                 - uses psql
@@ -318,7 +318,7 @@ class TestPostgres(unittest.TestCase):
         self.assertDictEqual(orig_environ, os.environ.copy())
 
     def test_without_uses_psql_database_is_not_available(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
             options:
                 - uses text files!
@@ -331,7 +331,7 @@ class TestPostgres(unittest.TestCase):
             self.check_database_does_not_exist(plugin.database)
 
     def test_option_keep_database_database_remains_available(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
             options:
                 - uses psql
@@ -392,7 +392,7 @@ class TestExecute(unittest.TestCase):
 
     @within_temp_dir
     def test_nonzero_exit_status_is_an_error(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
             script: scripts/this_script_does_not_exist_should_cause_an_error.py
             ''')

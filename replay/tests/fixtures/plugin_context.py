@@ -7,7 +7,7 @@ from externals.fspath import working_directory
 import os.path
 
 
-class Runner(object):
+class PluginContext(object):
 
     '''I hold a context & script. The context is set up in a way,
     that by removing the current working directory no residue remains.

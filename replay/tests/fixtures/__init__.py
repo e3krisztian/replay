@@ -1,3 +1,3 @@
-from replay.tests.fixtures.runner import Runner
+from replay.tests.fixtures.plugin_context import PluginContext
 
-__all__ = ['Runner']
+__all__ = ['PluginContext']
