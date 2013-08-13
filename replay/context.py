@@ -1,3 +1,10 @@
+import inspect
+
+import zope.dottedname.resolve as dottedname
+
+from replay import plugins
+
+
 class Context(object):
 
     datastore = None  # External
@@ -25,3 +32,19 @@ class Context(object):
         if plugins:
             with plugins[0]:
                 self.run(plugins[1:])
+
+    def resolve_plugin_class(self, plugin_name):
+        try:
+            plugin_class = dottedname.resolve(plugin_name)
+        except ImportError as e:
+            full_plugin_name = 'replay.plugins.' + plugin_name
+            try:
+                plugin_class = dottedname.resolve(full_plugin_name)
+            except ImportError:
+                raise e
+
+        if not (inspect.isclass(plugin_class)
+                and issubclass(plugin_class, plugins.Plugin)):
+            raise ValueError('{} is not a Plugin'.format(plugin_name))
+
+        return plugin_class
