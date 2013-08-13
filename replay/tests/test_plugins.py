@@ -121,7 +121,7 @@ class TestCopyScript(unittest.TestCase):
         DEFAULT_FIXTURE_KNOWN_FILE = 'scripts/import_roman.py'
         f = fixtures.PluginContext('{}')
 
-        with f.plugin(plugins.CopyScript):
+        with plugins.CopyScript(f.script.dir):
             self.assertTrue(os.path.exists(DEFAULT_FIXTURE_KNOWN_FILE))
 
 

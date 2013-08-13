@@ -79,9 +79,9 @@ def main():
         [replay.plugins.TemporaryDirectory(context, script)
             if args.script_working_directory is TEMPORARY_DIRECTORY
             else replay.plugins.WorkingDirectory(context, script)]
+        + [replay.plugins.CopyScript(script_dir)]
         + context.load_plugins(
             [
-                replay.plugins.CopyScript,
                 replay.plugins.Inputs,
                 replay.plugins.Outputs,
                 replay.plugins.PythonDependencies,

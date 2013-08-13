@@ -104,8 +104,12 @@ class CopyScript(Plugin):
     WorkingDirectory or TemporaryDirectory in the plugin list.
     '''
 
+    def __init__(self, script_dir):
+        super(CopyScript, self).__init__(context=None, script=None)
+        self.script_dir = script_dir
+
     def __enter__(self):
-        source = self.script.dir
+        source = self.script_dir
         destination = os.getcwd()
         log.debug('CopyScript: %s -> %s', source, destination)
         self._copy_tree(source, destination)
