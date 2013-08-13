@@ -398,4 +398,4 @@ class TestExecute(unittest.TestCase):
             ''')
 
         with self.assertRaises(exceptions.ScriptError):
-            f.run([plugins.Execute])
+            f.plugin(plugins.Execute).__enter__()

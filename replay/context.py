@@ -16,10 +16,12 @@ class Context(object):
         self.working_directory = working_directory
         self.index_server_url = index_server_url
 
-    def run(self, setup_plugins, script):
+    def load_plugins(self, plugin_classes, script):
+        return [plugin_class(self, script) for plugin_class in plugin_classes]
+
+    def run(self, plugins):
         '''I run scripts in isolation'''
 
-        if setup_plugins:
-            plugin = setup_plugins[0](self, script)
-            with plugin:
-                self.run(setup_plugins[1:], script)
+        if plugins:
+            with plugins[0]:
+                self.run(plugins[1:])

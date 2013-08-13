@@ -7,7 +7,7 @@ from replay import plugins
 class Test_run(unittest.TestCase):
 
     @staticmethod
-    def get_plugin(n, call_trace):
+    def get_plugin_class(n, call_trace):
         class TPlugin(plugins.Plugin):
 
             def __enter__(self):
@@ -21,16 +21,17 @@ class Test_run(unittest.TestCase):
     @within_temp_dir
     def test_all_plugins_are_run_in_order(self):
         call_trace = []
-        setup_plugins = (
-            self.get_plugin(1, call_trace),
-            self.get_plugin(2, call_trace),
-            self.get_plugin(3, call_trace))
+        plugin_classes = (
+            self.get_plugin_class(1, call_trace),
+            self.get_plugin_class(2, call_trace),
+            self.get_plugin_class(3, call_trace))
 
         f = fixtures.Runner(
             '''\
             script: scripts/import_roman.py
             ''')
-        f.context.run(setup_plugins, f.script)
+        plugins = f.context.load_plugins(plugin_classes, f.script)
+        f.context.run(plugins)
 
         self.assertEqual(
             [

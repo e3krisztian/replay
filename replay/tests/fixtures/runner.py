@@ -27,9 +27,6 @@ class Runner(object):
     def plugin(self, plugin_class):
         return plugin_class(self.context, self.script)
 
-    def run(self, plugins):
-        self.context.run(plugins, self.script)
-
     @property
     def _local_pypi_url(self):
         index_server_dir = pkg_resources.resource_filename(

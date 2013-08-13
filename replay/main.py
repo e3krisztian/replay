@@ -75,19 +75,20 @@ def main():
     with open(args.script_path) as script_file:
         script = replay.script.Script(script_dir, script_name, script_file)
 
-    setup_plugins = (
-        (replay.plugins.TemporaryDirectory
+    plugins = (
+        [replay.plugins.TemporaryDirectory(context, script)
             if args.script_working_directory is TEMPORARY_DIRECTORY
-            else replay.plugins.WorkingDirectory),
-        replay.plugins.CopyScript,
-        replay.plugins.Inputs,
-        replay.plugins.Outputs,
-        replay.plugins.PythonDependencies,
-        replay.plugins.Postgres,
-        replay.plugins.Execute
-        )
-
-    context.run(setup_plugins, script)
+            else replay.plugins.WorkingDirectory(context, script)]
+        + context.load_plugins(
+            [
+                replay.plugins.CopyScript,
+                replay.plugins.Inputs,
+                replay.plugins.Outputs,
+                replay.plugins.PythonDependencies,
+                replay.plugins.Postgres,
+                replay.plugins.Execute],
+            script))
+    context.run(plugins)
 
 
 if __name__ == '__main__':
