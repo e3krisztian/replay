@@ -71,9 +71,8 @@ def main():
 
     script_path = fspath.FsPath(args.script_path)
     script_dir = script_path.parent().path
-    script_name, _ = os.path.splitext(script_path.name)
     with open(args.script_path) as script_file:
-        script = replay.script.Script(script_dir, script_name, script_file)
+        script = replay.script.Script(script_file)
 
     plugins = (
         [replay.plugins.TemporaryDirectory(context, script)

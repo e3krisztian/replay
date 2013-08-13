@@ -119,9 +119,8 @@ class TestCopyScript(unittest.TestCase):
     @within_temp_dir
     def test_copy_of_scripts_directory_is_in_working_directory(self):
         DEFAULT_FIXTURE_KNOWN_FILE = 'scripts/import_roman.py'
-        f = fixtures.PluginContext('{}')
 
-        with plugins.CopyScript(f.script.dir):
+        with plugins.CopyScript(fixtures.FIXTURES_DIR):
             self.assertTrue(os.path.exists(DEFAULT_FIXTURE_KNOWN_FILE))
 
 
