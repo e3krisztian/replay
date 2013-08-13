@@ -13,28 +13,46 @@ from replay import plugins
 from replay import exceptions
 
 
-class TestDataStore(unittest.TestCase):
+class TestInputs(unittest.TestCase):
 
     @within_temp_dir
     def test_input_file_missing_is_error(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
-            inputs:
+            Inputs:
                 - missing: missing
             ''')
 
         with self.assertRaises(exceptions.MissingInput):
-            f.plugin(plugins.DataStore).__enter__()
+            f.plugin.__enter__()
+
+    @within_temp_dir
+    def test_inputs_are_downloaded_from_datastore(self):
+        f = fixtures.PluginContext(
+            '''\
+            Inputs:
+                - an input file: input/datastore/path
+            ''')
+
+        (f.datastore / 'input/datastore/path').content = 'hello'
+
+        with f.plugin:
+            self.assertEqual(
+                'hello',
+                (fspath.working_directory() / 'an input file').content)
+
+
+class TestOutputs(unittest.TestCase):
 
     @within_temp_dir
     def test_outputs_are_uploaded_to_datastore(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
-            outputs:
+            Outputs:
                 - an output file: /output/datastore/path
             ''')
 
-        with f.plugin(plugins.DataStore):
+        with f.plugin:
             (fspath.working_directory() / 'an output file').content = 'data'
 
         self.assertEqual(
@@ -43,14 +61,14 @@ class TestDataStore(unittest.TestCase):
 
     @within_temp_dir
     def test_output_file_missing_is_error(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
-            outputs:
+            Outputs:
                 - missing: missing
             ''')
 
         with self.assertRaises(exceptions.MissingOutput):
-            with f.plugin(plugins.DataStore):
+            with f.plugin:
                 pass
 
 
@@ -76,78 +94,77 @@ class TestWorkingDirectory(unittest.TestCase):
         self.run_plugin()
         self.assertEqual(self.orig_working_directory, os.getcwd())
 
-    @within_temp_dir
-    def test_copy_of_scripts_directory_is_in_working_directory(self):
-        DEFAULT_FIXTURE_KNOWN_FILE = 'scripts/import_roman.py'
-
-        def run_in_directory():
-            print os.getcwd(), os.listdir('.')
-            self.assertTrue(os.path.exists(DEFAULT_FIXTURE_KNOWN_FILE))
-        self.run_plugin(run_in_directory)
-
-    def run_plugin(self, run_in_directory=(lambda: False)):
-        f = fixtures.Runner('{}')
+    def run_plugin(self):
+        f = fixtures.PluginContext()
         self.orig_working_directory = os.getcwd()
 
-        with f.plugin(plugins.WorkingDirectory):
+        with plugins.WorkingDirectory(f.context):
             self.script_working_directory = os.getcwd()
-            run_in_directory()
 
 
 class TestTemporaryDirectory(TestWorkingDirectory):
 
-    def run_plugin(self, run_in_directory=(lambda: False)):
-        f = fixtures.Runner('{}')
+    def run_plugin(self):
+        f = fixtures.PluginContext()
         f.context.working_directory = (
             plugins.TemporaryDirectory)
         self.orig_working_directory = os.getcwd()
 
-        with f.plugin(plugins.TemporaryDirectory):
+        with plugins.TemporaryDirectory(f.context):
             self.script_working_directory = os.getcwd()
-            run_in_directory()
+
+
+class TestCopyScript(unittest.TestCase):
+
+    @within_temp_dir
+    def test_copy_of_scripts_directory_is_in_working_directory(self):
+        DEFAULT_FIXTURE_KNOWN_FILE = 'scripts/import_roman.py'
+
+        with plugins.CopyScript(fixtures.FIXTURES_DIR):
+            self.assertTrue(os.path.exists(DEFAULT_FIXTURE_KNOWN_FILE))
 
 
 class TestPythonDependencies(unittest.TestCase):
 
     @within_temp_dir
     def test_virtualenv_is_created_in_context_specified_dir(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
-            python dependencies:
+            PythonDependencies:
             ''')
         virtualenv_parent_dir = f.context.virtualenv_parent_dir
 
-        plugin = f.plugin(plugins.PythonDependencies)
-        with plugin:
-            virtualenv_dir = virtualenv_parent_dir / plugin.virtualenv_name
+        with f.plugin:
+            virtualenv_dir = virtualenv_parent_dir / f.plugin.virtualenv_name
 
         self.assertTrue(virtualenv_dir.is_dir())
 
     @within_temp_dir
     def test_virtualenv_already_exists_no_error(self):
-        f = fixtures.Runner(
-            '''\
-            python dependencies:
-            ''')
-        virtualenv_parent_dir = f.context.virtualenv_parent_dir
+        empty_spec = '''\
+            PythonDependencies:
+            '''
 
-        with f.plugin(plugins.PythonDependencies):
-            plugin = f.plugin(plugins.PythonDependencies)
-            with plugin:
-                virtualenv_dir = virtualenv_parent_dir / plugin.virtualenv_name
+        f1 = fixtures.PluginContext(empty_spec)
+        f2 = fixtures.PluginContext(empty_spec)
+        virtualenv_parent_dir = f1.context.virtualenv_parent_dir
+
+        with f1.plugin:
+            with f2.plugin:
+                virtualenv_dir = (
+                    virtualenv_parent_dir / f2.plugin.virtualenv_name)
 
         self.assertTrue(virtualenv_dir.is_dir())
 
     @within_temp_dir
     def test_new_virtualenv_has_all_the_required_packages(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
-            python dependencies:
+            PythonDependencies:
                 - roman==2.0.0
             ''')
-        plugin = f.plugin(plugins.PythonDependencies)
-        with plugin:
-            python = plugin.virtualenv_dir / 'bin/python'
+        with f.plugin:
+            python = f.plugin.virtualenv_dir / 'bin/python'
 
         # verify, that we can import the required "roman" module
         program = 'import roman; print(roman.toRoman(23))'
@@ -159,19 +176,19 @@ class TestPythonDependencies(unittest.TestCase):
 
     @within_temp_dir
     def test_required_package_not_installed_is_an_error(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
-            python dependencies:
+            PythonDependencies:
                 - remedy_for_all_problems==0.42.0
             ''')
         with self.assertRaises(exceptions.MissingPythonDependency):
-            f.plugin(plugins.PythonDependencies).__enter__()
+            f.plugin.__enter__()
 
     @within_temp_dir
     def test_module_in_virtualenv_is_available(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
-            python dependencies:
+            PythonDependencies:
                 - roman==2.0.0
             ''')
 
@@ -179,7 +196,7 @@ class TestPythonDependencies(unittest.TestCase):
         cmdspec = [
             'python', '-c', 'import roman; print(roman.toRoman(23))']
 
-        with f.plugin(plugins.PythonDependencies):
+        with f.plugin:
             result = external_process.run(cmdspec)
 
         # if result.status: print(result)
@@ -189,70 +206,69 @@ class TestPythonDependencies(unittest.TestCase):
 class Test_PythonDependencies_virtualenv_name(unittest.TestCase):
 
     def test_empty_virtualenv_name(self):
-        f = fixtures.Runner('{}')
+        f = fixtures.PluginContext(
+            '''\
+            PythonDependencies:
+            ''')
         self.assertEqual(
             '_replay_d41d8cd98f00b204e9800998ecf8427e',
-            f.plugin(plugins.PythonDependencies).virtualenv_name)
+            f.plugin.virtualenv_name)
 
     def test_virtualenv_name_depends_on_required_python_packages(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
-            python dependencies:
+            PythonDependencies:
                 - a
                 - roman==2.0.0
                 - pi>=3.14
             ''')
         self.assertEqual(
             '_replay_e8a8bbe2f9fd4e9286aeedab2a5009e2',
-            f.plugin(plugins.PythonDependencies).virtualenv_name)
+            f.plugin.virtualenv_name)
 
     def test_python_package_order_does_not_matter(self):
-        f1 = fixtures.Runner(
+        f1 = fixtures.PluginContext(
             '''\
-            python dependencies:
+            PythonDependencies:
                 - a
                 - roman==2.0.0
                 - pi>=3.14
             ''')
-        f2 = fixtures.Runner(
+        f2 = fixtures.PluginContext(
             '''\
-            python dependencies:
+            PythonDependencies:
                 - pi>=3.14
                 - roman==2.0.0
                 - a
             ''')
 
-        ve_name1 = f1.plugin(plugins.PythonDependencies).virtualenv_name
-        ve_name2 = f2.plugin(plugins.PythonDependencies).virtualenv_name
+        ve_name1 = f1.plugin.virtualenv_name
+        ve_name2 = f2.plugin.virtualenv_name
         self.assertEqual(ve_name1, ve_name2)
         self.assertEqual('_replay_e8a8bbe2f9fd4e9286aeedab2a5009e2', ve_name1)
 
 
 class TestPostgres(unittest.TestCase):
 
-    @property
     def fixture(self):
-        return fixtures.Runner(
+        return fixtures.PluginContext(
             '''\
-            options:
-                - uses psql
+            Postgres:
+                script name: xsfw
             ''')
 
     def test_database_name(self):
-        f = self.fixture
-        plugin = f.plugin(plugins.Postgres)
+        plugin = self.fixture().plugin
         timestamp = plugin.timestamp
 
-        self.assertIn(f.script.name, plugin.database)
+        self.assertIn('xsfw', plugin.database)
         self.assertIn(getpass.getuser(), plugin.database)
         self.assertIn(timestamp, plugin.database)
         self.assertEqual(timestamp, plugin.timestamp)
 
     def test_database_name_is_unique(self):
-        f = self.fixture
-
-        plugin1 = f.plugin(plugins.Postgres)
-        plugin2 = f.plugin(plugins.Postgres)
+        plugin1 = self.fixture().plugin
+        plugin2 = self.fixture().plugin
 
         self.assertLess(plugin1.timestamp, plugin2.timestamp)
         self.assertLess(plugin1.database, plugin2.database)
@@ -278,13 +294,13 @@ class TestPostgres(unittest.TestCase):
         self.assertNotIn(database, result.stdout)
 
     def test_psql_connects_to_database(self):
-        plugin = self.fixture.plugin(plugins.Postgres)
+        plugin = self.fixture().plugin
 
         with plugin:
             self.check_psql_default_database(plugin.database)
 
     def test_database_dropped_after_block(self):
-        plugin = self.fixture.plugin(plugins.Postgres)
+        plugin = self.fixture().plugin
 
         with plugin:
             pass
@@ -294,42 +310,25 @@ class TestPostgres(unittest.TestCase):
     def test_environment_variable_restored(self):
         orig_environ = os.environ.copy()
 
-        with self.fixture.plugin(plugins.Postgres):
+        with self.fixture().plugin:
             pass
 
         self.assertDictEqual(orig_environ, os.environ.copy())
 
-    def test_without_uses_psql_database_is_not_available(self):
-        f = fixtures.Runner(
-            '''\
-            options:
-                - uses text files!
-            ''')
-
-        plugin = f.plugin(plugins.Postgres)
-
-        with plugin:
-            self.assertFalse(plugin.enabled)
-            self.check_database_does_not_exist(plugin.database)
-
     def test_option_keep_database_database_remains_available(self):
-        f = fixtures.Runner(
+        f = fixtures.PluginContext(
             '''\
-            options:
-                - uses psql
-                - keep database
-                - debug
+            Postgres:
+                keep database: True
             ''')
-
-        plugin = f.plugin(plugins.Postgres)
 
         try:
-            with plugin:
-                self.check_psql_default_database(plugin.database)
+            with f.plugin:
+                self.check_psql_default_database(f.plugin.database)
 
-            self.check_database_exists(plugin.database)
+            self.check_database_exists(f.plugin.database)
         finally:
-            external_process.run(['dropdb', plugin.database])
+            external_process.run(['dropdb', f.plugin.database])
 
 
 class Test_EnvironKeyState(unittest.TestCase):
@@ -368,3 +367,17 @@ class Test_EnvironKeyState(unittest.TestCase):
         state.restore(env)
 
         self.assertEqual({'a': 1, 'key': 'value'}, env)
+
+
+class TestExecute(unittest.TestCase):
+
+    @within_temp_dir
+    def test_nonzero_exit_status_is_an_error(self):
+        f = fixtures.PluginContext(
+            '''\
+            Execute:
+                scripts/this_script_does_not_exist_should_cause_an_error.py
+            ''')
+
+        with self.assertRaises(exceptions.ScriptError):
+            f.plugin.__enter__()

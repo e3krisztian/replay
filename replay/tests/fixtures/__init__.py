@@ -1,3 +1,8 @@
-from replay.tests.fixtures.runner import Runner
+from replay.tests.fixtures.plugin_context import PluginContext
 
-__all__ = ['Runner']
+import os.path
+
+
+FIXTURES_DIR = os.path.join(os.path.dirname(__file__))
+
+__all__ = ['PluginContext', 'FIXTURES_DIR']

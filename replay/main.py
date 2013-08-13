@@ -3,7 +3,6 @@ from externals import fspath
 import os.path
 import sys
 import replay.context
-import replay.script
 import replay.plugins
 
 
@@ -61,15 +60,6 @@ def get_script_working_directory(args):
     return fspath.FsPath(args.script_working_directory)
 
 
-def run_with(setup_plugins, context, script):
-    '''I run scripts (maybe in isolation)'''
-
-    if setup_plugins:
-        plugin = setup_plugins[0](context, script)
-        with plugin:
-            run_with(setup_plugins[1:], context, script)
-
-
 def main():
     args = parse_args(sys.argv[1:])
 
@@ -80,21 +70,16 @@ def main():
 
     script_path = fspath.FsPath(args.script_path)
     script_dir = script_path.parent().path
-    script_name, _ = os.path.splitext(script_path.name)
+
     with open(args.script_path) as script_file:
-        script = replay.script.Script(script_dir, script_name, script_file)
+        plugins = (
+            [replay.plugins.TemporaryDirectory(context)
+                if args.script_working_directory is TEMPORARY_DIRECTORY
+                else replay.plugins.WorkingDirectory(context)]
+            + [replay.plugins.CopyScript(script_dir)]
+            + list(context.load_plugins(script_file)))
 
-    setup_plugins = (
-        (replay.plugins.TemporaryDirectory
-            if args.script_working_directory is TEMPORARY_DIRECTORY
-            else replay.plugins.WorkingDirectory),
-        replay.plugins.DataStore,
-        replay.plugins.PythonDependencies,
-        replay.plugins.Postgres,
-        replay.plugins.Execute
-        )
-
-    run_with(setup_plugins, context, script)
+    context.run(plugins)
 
 
 if __name__ == '__main__':
