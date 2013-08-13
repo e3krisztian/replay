@@ -254,6 +254,7 @@ class TestPostgres(unittest.TestCase):
             '''\
             options:
                 - uses psql
+            script name: xsfw
             ''')
 
     def test_database_name(self):
@@ -261,7 +262,7 @@ class TestPostgres(unittest.TestCase):
         plugin = f.plugin(plugins.Postgres)
         timestamp = plugin.timestamp
 
-        self.assertIn(f.script.name, plugin.database)
+        self.assertIn('xsfw', plugin.database)
         self.assertIn(getpass.getuser(), plugin.database)
         self.assertIn(timestamp, plugin.database)
         self.assertEqual(timestamp, plugin.timestamp)

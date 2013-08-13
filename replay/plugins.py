@@ -262,12 +262,13 @@ class Postgres(Plugin):
         self.keep_database = (
             self.has_option('debug') and self.has_option('keep database'))
         self.PGDATABASE = _EnvironKeyState(os.environ, 'PGDATABASE')
+        self.script_name = script._raw_spec.get('script name', 'SCRIPT_NAME')
 
     @property
     def database(self):
         return '{user}_{script_name}_{timestamp}'.format(
-            script_name=self.script.name,
             user=getpass.getuser(),
+            script_name=self.script_name,
             timestamp=self.timestamp)
 
     def __enter__(self):
