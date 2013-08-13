@@ -13,7 +13,7 @@ class PluginContext(object):
     that by removing the current working directory no residue remains.
     '''
 
-    def __init__(self, script):
+    def __init__(self, script='{}'):
         venv_parent_dir = working_directory() / 'replay_virtualenvs'
 
         self.datastore = MemoryStore()

@@ -95,7 +95,7 @@ class TestWorkingDirectory(unittest.TestCase):
         self.assertEqual(self.orig_working_directory, os.getcwd())
 
     def run_plugin(self):
-        f = fixtures.PluginContext('{}')
+        f = fixtures.PluginContext()
         self.orig_working_directory = os.getcwd()
 
         with f.plugin(plugins.WorkingDirectory):
@@ -105,7 +105,7 @@ class TestWorkingDirectory(unittest.TestCase):
 class TestTemporaryDirectory(TestWorkingDirectory):
 
     def run_plugin(self):
-        f = fixtures.PluginContext('{}')
+        f = fixtures.PluginContext()
         f.context.working_directory = (
             plugins.TemporaryDirectory)
         self.orig_working_directory = os.getcwd()
@@ -206,7 +206,7 @@ class TestPythonDependencies(unittest.TestCase):
 class Test_PythonDependencies_virtualenv_name(unittest.TestCase):
 
     def test_empty_virtualenv_name(self):
-        f = fixtures.PluginContext('{}')
+        f = fixtures.PluginContext()
         self.assertEqual(
             '_replay_d41d8cd98f00b204e9800998ecf8427e',
             f.plugin(plugins.PythonDependencies).virtualenv_name)

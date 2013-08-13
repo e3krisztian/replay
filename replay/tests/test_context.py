@@ -1,6 +1,5 @@
 import unittest
 from replay.tests import fixtures
-from temp_dir import within_temp_dir
 from replay import plugins
 
 
@@ -18,7 +17,6 @@ class Test_run(unittest.TestCase):
 
         return TPlugin
 
-    @within_temp_dir
     def test_all_plugins_are_run_in_order(self):
         call_trace = []
         plugin_classes = (
@@ -26,10 +24,7 @@ class Test_run(unittest.TestCase):
             self.get_plugin_class(2, call_trace),
             self.get_plugin_class(3, call_trace))
 
-        f = fixtures.PluginContext(
-            '''\
-            script: scripts/import_roman.py
-            ''')
+        f = fixtures.PluginContext()
         plugins = f.context.load_plugins(plugin_classes, f.script)
         f.context.run(plugins)
 
