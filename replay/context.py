@@ -3,6 +3,7 @@ import inspect
 import zope.dottedname.resolve as dottedname
 
 from replay import plugins
+import replay.script
 
 
 class Context(object):
@@ -23,7 +24,14 @@ class Context(object):
         self.working_directory = working_directory
         self.index_server_url = index_server_url
 
-    def load_plugins(self, plugin_classes, script):
+    def load_plugins(self, script_file):
+        script = replay.script.Script(script_file)
+        plugin_classes = [
+            plugins.Inputs,
+            plugins.Outputs,
+            plugins.PythonDependencies,
+            plugins.Postgres,
+            plugins.Execute]
         return [plugin_class(self, script) for plugin_class in plugin_classes]
 
     def run(self, plugins):

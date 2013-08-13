@@ -71,22 +71,15 @@ def main():
 
     script_path = fspath.FsPath(args.script_path)
     script_dir = script_path.parent().path
-    with open(args.script_path) as script_file:
-        script = replay.script.Script(script_file)
 
-    plugins = (
-        [replay.plugins.TemporaryDirectory(context, script)
-            if args.script_working_directory is TEMPORARY_DIRECTORY
-            else replay.plugins.WorkingDirectory(context, script)]
-        + [replay.plugins.CopyScript(script_dir)]
-        + context.load_plugins(
-            [
-                replay.plugins.Inputs,
-                replay.plugins.Outputs,
-                replay.plugins.PythonDependencies,
-                replay.plugins.Postgres,
-                replay.plugins.Execute],
-            script))
+    with open(args.script_path) as script_file:
+        plugins = (
+            [replay.plugins.TemporaryDirectory(context)
+                if args.script_working_directory is TEMPORARY_DIRECTORY
+                else replay.plugins.WorkingDirectory(context)]
+            + [replay.plugins.CopyScript(script_dir)]
+            + context.load_plugins(script_file))
+
     context.run(plugins)
 
 

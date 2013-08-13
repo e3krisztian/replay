@@ -98,7 +98,7 @@ class TestWorkingDirectory(unittest.TestCase):
         f = fixtures.PluginContext()
         self.orig_working_directory = os.getcwd()
 
-        with f.plugin(plugins.WorkingDirectory):
+        with plugins.WorkingDirectory(f.context):
             self.script_working_directory = os.getcwd()
 
 
@@ -110,7 +110,7 @@ class TestTemporaryDirectory(TestWorkingDirectory):
             plugins.TemporaryDirectory)
         self.orig_working_directory = os.getcwd()
 
-        with f.plugin(plugins.TemporaryDirectory):
+        with plugins.TemporaryDirectory(f.context):
             self.script_working_directory = os.getcwd()
 
 

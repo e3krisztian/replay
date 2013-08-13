@@ -9,6 +9,9 @@ class Test_run(unittest.TestCase):
     def get_plugin_class(n, call_trace):
         class TPlugin(plugins.Plugin):
 
+            def __init__(self):
+                super(TPlugin, self).__init__(context=None, script=None)
+
             def __enter__(self):
                 call_trace.append((n, '__enter__'))
 
@@ -25,7 +28,7 @@ class Test_run(unittest.TestCase):
             self.get_plugin_class(3, call_trace))
 
         f = fixtures.PluginContext()
-        plugins = f.context.load_plugins(plugin_classes, f.script)
+        plugins = [plugin_class() for plugin_class in plugin_classes]
         f.context.run(plugins)
 
         self.assertEqual(

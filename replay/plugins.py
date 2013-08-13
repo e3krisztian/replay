@@ -46,8 +46,8 @@ class _WorkingDirectoryPlugin(Plugin):
     and also clean up after them.
     '''
 
-    def __init__(self, context, script):
-        super(_WorkingDirectoryPlugin, self).__init__(context, script)
+    def __init__(self, context):
+        super(_WorkingDirectoryPlugin, self).__init__(context, script=None)
         self.original_working_directory = os.getcwd()
         self.working_directory = None
 
