@@ -105,3 +105,12 @@ class Test_load_plugins(unittest.TestCase):
             ''')
         with self.assertRaises(ValueError):
             list(context().load_plugins(f))
+
+    def test_exception_from_load_plugin(self):
+        f = StringIO(
+            '''\
+            # not a mapping:
+            Execute /bin/true
+            ''')
+        with self.assertRaises(ValueError):
+            list(context().load_plugins(f))
