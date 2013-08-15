@@ -372,12 +372,60 @@ class Test_EnvironKeyState(unittest.TestCase):
 class TestExecute(unittest.TestCase):
 
     @within_temp_dir
+    def test_python_script_executed(self):
+        wd = fspath.working_directory()
+        (wd / 'script.py').content = (
+            '''open('output', 'w').write('hello from python')''')
+
+        f = fixtures.PluginContext(
+            '''\
+            Execute:
+                python script.py
+            ''')
+
+        with f.plugin:
+            pass
+
+        self.assertEqual(
+            'hello from python',
+            (wd / 'output').content.rstrip())
+
+    @within_temp_dir
     def test_nonzero_exit_status_is_an_error(self):
         f = fixtures.PluginContext(
             '''\
             Execute:
-                scripts/this_script_does_not_exist_should_cause_an_error.py
+                exit 1
             ''')
 
         with self.assertRaises(exceptions.ScriptError):
             f.plugin.__enter__()
+
+    @within_temp_dir
+    def test_python_script_not_found_is_an_error(self):
+        f = fixtures.PluginContext(
+            '''\
+            Execute:
+                python this_script_does_not_exist.py
+            ''')
+
+        with self.assertRaises(exceptions.ScriptError):
+            f.plugin.__enter__()
+
+    @within_temp_dir
+    def test_short_inline_shell_script_executed(self):
+        wd = fspath.working_directory()
+        (wd / 'script').content = 'echo hello from /bin/sh > output'
+
+        f = fixtures.PluginContext(
+            '''\
+            Execute:
+                chmod +x script; ./script
+            ''')
+
+        with f.plugin:
+            pass
+
+        self.assertEqual(
+            'hello from /bin/sh',
+            (wd / 'output').content.rstrip())

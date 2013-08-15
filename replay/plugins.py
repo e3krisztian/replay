@@ -280,7 +280,9 @@ class Postgres(Plugin):
 class Execute(Plugin):
 
     def __enter__(self):
-        command = ['python', self.script]
+        command = ['/bin/sh', '-c', self.script]
+        log.debug('Execute: %s', command)
         result = external_process.run(command)
+        log.debug('Execute: exit status %s', result.status)
         if result.status != 0:
             raise exceptions.ScriptError(result)

@@ -4,4 +4,4 @@ Outputs:
     - working_directory : working_directory
 ---
 
-Execute: getcwd.py
+Execute: python getcwd.py
