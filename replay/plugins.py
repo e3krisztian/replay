@@ -188,17 +188,18 @@ class Outputs(_DataStorePlugin):
 class _EnvironKeyState(object):
 
     def __init__(self, environ, key):
+        self.environ = environ
         self.key = key
         self.missing = key not in environ
         self.value = environ.get(key)
 
-    def restore(self, environ):
+    def restore(self):
         key = self.key
         if self.missing:
-            if key in environ:
-                del environ[key]
+            if key in self.environ:
+                del self.environ[key]
         else:
-            environ[key] = self.value
+            self.environ[key] = self.value
 
 
 class PythonDependencies(Plugin):
@@ -209,9 +210,10 @@ class PythonDependencies(Plugin):
         self.virtualenv_name = '_replay_' + self._package_hash()
         self.virtualenv_dir = (
             self.context.virtualenv_parent_dir / self.virtualenv_name)
-        self.PATH = _EnvironKeyState(os.environ, 'PATH')
+        self.PATH = None
 
     def __enter__(self):
+        self.PATH = _EnvironKeyState(os.environ, 'PATH')
         venv_bin = (self.virtualenv_dir / 'bin').path
         path = venv_bin + os.pathsep + os.environ.get('PATH', '')
         os.environ['PATH'] = path
@@ -219,7 +221,7 @@ class PythonDependencies(Plugin):
             self._make_virtualenv()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.PATH.restore(os.environ)
+        self.PATH.restore()
 
     def _package_hash(self):
         dependencies = '\n'.join(sorted(self.python_dependencies))
@@ -272,7 +274,7 @@ class Postgres(Plugin):
         external_process.run(['createdb', self.database])
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.PGDATABASE.restore(os.environ)
+        self.PGDATABASE.restore()
         if not self.keep_database:
             external_process.run(['dropdb', self.database])
 

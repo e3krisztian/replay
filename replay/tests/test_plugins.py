@@ -338,7 +338,7 @@ class Test_EnvironKeyState(unittest.TestCase):
         state = plugins._EnvironKeyState(env, 'key')
         env['key'] = 'create'
 
-        state.restore(env)
+        state.restore()
 
         self.assertEqual({'a': 1}, env)
 
@@ -346,7 +346,7 @@ class Test_EnvironKeyState(unittest.TestCase):
         env = {'a': 1}
         state = plugins._EnvironKeyState(env, 'key')
 
-        state.restore(env)
+        state.restore()
 
         self.assertEqual({'a': 1}, env)
 
@@ -355,7 +355,7 @@ class Test_EnvironKeyState(unittest.TestCase):
         state = plugins._EnvironKeyState(env, 'key')
         env['key'] = 'another value'
 
-        state.restore(env)
+        state.restore()
 
         self.assertEqual({'a': 1, 'key': 'value'}, env)
 
@@ -364,7 +364,7 @@ class Test_EnvironKeyState(unittest.TestCase):
         state = plugins._EnvironKeyState(env, 'key')
         del env['key']
 
-        state.restore(env)
+        state.restore()
 
         self.assertEqual({'a': 1, 'key': 'value'}, env)
 
