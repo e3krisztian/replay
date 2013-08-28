@@ -34,11 +34,11 @@ class TestInputs(unittest.TestCase):
                 - an input file: input/datastore/path
             ''')
 
-        (f.datastore / 'input/datastore/path').content = 'hello'
+        (f.datastore / 'input/datastore/path').content = b'hello'
 
         with f.plugin:
             self.assertEqual(
-                'hello',
+                b'hello',
                 (fspath.working_directory() / 'an input file').content)
 
 
@@ -53,10 +53,10 @@ class TestOutputs(unittest.TestCase):
             ''')
 
         with f.plugin:
-            (fspath.working_directory() / 'an output file').content = 'data'
+            (fspath.working_directory() / 'an output file').content = b'data'
 
         self.assertEqual(
-            'data',
+            b'data',
             (f.datastore / 'output/datastore/path').content)
 
     @within_temp_dir
@@ -172,7 +172,7 @@ class TestPythonDependencies(unittest.TestCase):
         result = external_process.run(cmdspec)
 
         # if result.status: print(result)
-        self.assertEqual('XXIII', result.stdout.rstrip())
+        self.assertEqual(b'XXIII', result.stdout.rstrip())
 
     @within_temp_dir
     def test_required_package_not_installed_is_an_error(self):
@@ -200,7 +200,7 @@ class TestPythonDependencies(unittest.TestCase):
             result = external_process.run(cmdspec)
 
         # if result.status: print(result)
-        self.assertEqual('XXIII', result.stdout.rstrip())
+        self.assertEqual(b'XXIII', result.stdout.rstrip())
 
 
 class Test_PythonDependencies_virtualenv_name(unittest.TestCase):
@@ -276,22 +276,25 @@ class TestPostgres(unittest.TestCase):
     def check_psql_default_database(self, database):
         result = external_process.run(['psql', '-c', r'\conninfo'])
 
+        raw_database = database.encode('utf8')
         self.assertEqual(0, result.status)
-        self.assertIn(database, result.stdout)
-        self.assertNotIn(database, result.stderr)
+        self.assertIn(raw_database, result.stdout)
+        self.assertNotIn(raw_database, result.stderr)
 
     def check_database_exists(self, database):
         result = external_process.run(['psql', '-c', r'\list'])
 
+        raw_database = database.encode('utf8')
         self.assertEqual(0, result.status)
-        self.assertIn(database, result.stdout)
-        self.assertNotIn(database, result.stderr)
+        self.assertIn(raw_database, result.stdout)
+        self.assertNotIn(raw_database, result.stderr)
 
     def check_database_does_not_exist(self, database):
         result = external_process.run(['psql', 'postgres', '-c', r'\list'])
 
+        raw_database = database.encode('utf8')
         self.assertEqual(0, result.status)
-        self.assertNotIn(database, result.stdout)
+        self.assertNotIn(raw_database, result.stdout)
 
     def test_psql_connects_to_database(self):
         plugin = self.fixture().plugin
@@ -375,10 +378,10 @@ class TestExecute(unittest.TestCase):
     def test_python_script_executed(self):
         wd = fspath.working_directory()
         (wd / 'script.py').content = (
-            '''open('output', 'w').write('hello from python')''')
+            b'''open('output', 'w').write('hello from python')''')
 
         f = fixtures.PluginContext(
-            '''\
+            u'''\
             Execute:
                 python script.py
             ''')
@@ -387,7 +390,7 @@ class TestExecute(unittest.TestCase):
             pass
 
         self.assertEqual(
-            'hello from python',
+            b'hello from python',
             (wd / 'output').content.rstrip())
 
     @within_temp_dir
@@ -415,10 +418,10 @@ class TestExecute(unittest.TestCase):
     @within_temp_dir
     def test_short_inline_shell_script_executed(self):
         wd = fspath.working_directory()
-        (wd / 'script').content = 'echo hello from /bin/sh > output'
+        (wd / 'script').content = b'echo hello from /bin/sh > output'
 
         f = fixtures.PluginContext(
-            '''\
+            u'''\
             Execute:
                 chmod +x script; ./script
             ''')
@@ -427,5 +430,5 @@ class TestExecute(unittest.TestCase):
             pass
 
         self.assertEqual(
-            'hello from /bin/sh',
+            b'hello from /bin/sh',
             (wd / 'output').content.rstrip())

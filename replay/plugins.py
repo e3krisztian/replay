@@ -1,5 +1,5 @@
 import abc
-import external_process
+from . import external_process
 import shutil
 import os
 from replay import exceptions
@@ -224,8 +224,8 @@ class PythonDependencies(Plugin):
         self.PATH.restore()
 
     def _package_hash(self):
-        dependencies = '\n'.join(sorted(self.python_dependencies))
-        return hashlib.md5(dependencies).hexdigest()
+        dependencies = u'\n'.join(sorted(self.python_dependencies))
+        return hashlib.md5(dependencies.encode('utf8')).hexdigest()
 
     @property
     def index_server_url(self):

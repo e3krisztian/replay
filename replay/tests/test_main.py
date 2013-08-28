@@ -66,12 +66,12 @@ class Test_main(unittest.TestCase):
             'tests/fixtures/scripts/to_roman.script')
         ds = working_directory()
 
-        (ds / 'arab').content = '23'
+        (ds / 'arab').content = b'23'
 
         with mock.patch('sys.argv', ['replay', to_roman_script]):
             m.main()
 
-        self.assertEqual('XXIII', (ds / 'roman').content)
+        self.assertEqual(b'XXIII', (ds / 'roman').content)
 
     @within_temp_dir
     def test_run_with_explicit_working_directory(self):
@@ -89,4 +89,6 @@ class Test_main(unittest.TestCase):
         with mock.patch('sys.argv', command):
             m.main()
 
-        self.assertEqual(wd.path, (ds / 'working_directory').content)
+        self.assertEqual(
+            wd.path.encode('utf8'),
+            (ds / 'working_directory').content)

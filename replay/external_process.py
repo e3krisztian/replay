@@ -12,28 +12,25 @@ class Result(object):
         self.stdout = stdout
         self.stderr = stderr
 
-    def __unicode__(self):
+    def __str__(self):
         def indent(text):
             indent = u' ' * 2
-            return indent + ('\n' + indent).join(text.splitlines())
+            return indent + (u'\n' + indent).join(text.splitlines())
 
         def fragments():
             yield u'Command execution result'
             if self.cmdspec:
                 yield u'COMMAND:'
-                yield indent(unicode(self.cmdspec))
+                yield indent(str(self.cmdspec))
             yield u'STATUS:'
-            yield indent(unicode(self.status))
+            yield indent(str(self.status))
             if self.stdout:
                 yield u'STDOUT:'
-                yield indent(unicode(self.stdout))
+                yield indent(self.stdout.decode('utf8'))
             if self.stderr:
                 yield u'STDERR:'
-                yield indent(unicode(self.stderr))
+                yield indent(self.stderr.decode('utf8'))
         return u'\n'.join(fragments())
-
-    def __str__(self):
-        return unicode(self).encode('utf-8')
 
 
 def run(args_list, env=None, cwd=None):

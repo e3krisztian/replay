@@ -1,7 +1,6 @@
 from externals.fake import Fake as MemoryStore
 from replay import context
 import pkg_resources
-from replay.tests.path2url import path2url
 from externals.fspath import working_directory
 import os.path
 
@@ -27,8 +26,8 @@ class PluginContext(object):
     @property
     def _local_pypi_url(self):
         index_server_dir = pkg_resources.resource_filename(
-            'replay', 'tests/fixtures/pypi/simple')
+            u'replay', u'tests/fixtures/pypi/simple')
         assert os.path.isdir(index_server_dir), index_server_dir
-        index_server_url = path2url(index_server_dir)
+        index_server_url = u'file:' + index_server_dir
 
         return index_server_url
