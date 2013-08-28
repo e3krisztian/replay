@@ -3,16 +3,12 @@
 
 from setuptools import setup
 
-VERSION = '0.20130626.0'
-VERSION_SUFFIX = '-dev'
-
 with open('requirements.txt') as f:
     requirements_txt = [line.rstrip() for line in f.readlines()]
 
 setup(
     name='replay',
-    version='{version}{version_suffix}'.format(
-        version=VERSION, version_suffix=VERSION_SUFFIX),
+    version=':versiontools:replay:',
 
     description=u'Tools for replaying data transformations',
     author=u'Krisztián Fekete',
@@ -20,13 +16,15 @@ setup(
 
     packages=['replay'],
 
+    setup_requires = [
+        'versiontools >= 1.8',
+    ],
+
     install_requires=requirements_txt,
     dependency_links=[
         'https://github.com/krisztianfekete/externals/tarball/master#egg=externals-0.1'],
 
     tests_require=['mock'],
-
-    provides=['replay ({version})'.format(version=VERSION)],
 
     entry_points={
         'console_scripts': [
