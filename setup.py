@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding: utf8
+from __future__ import unicode_literals, print_function
 
 from setuptools import setup, find_packages
 
@@ -15,16 +16,14 @@ setup(
     name='replay',
     version=':versiontools:replay:',
 
-    description=u'Tools for replaying data transformations',
-    author=u'Krisztián Fekete',
+    description='Tools for replaying data transformations',
+    author='Krisztián Fekete',
     url='https://github.com/ceumicrodata/replay',
 
     packages=find_packages('.'),
     include_package_data=True,
 
-    setup_requires = [
-        'versiontools >= 1.8',
-    ],
+    setup_requires=['versiontools >= 1.8'],
 
     use_2to3=PY3,
     install_requires=requirements_txt,
@@ -36,6 +35,6 @@ setup(
     entry_points={
         'console_scripts': [
             'replay=replay.main:main'
-            ],
-        }
-    )
+        ],
+    }
+)
