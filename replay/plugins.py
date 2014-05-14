@@ -232,12 +232,13 @@ class PythonDependencies(Plugin):
         return self.context.index_server_url
 
     def _install_package(self, package_spec, index_server_url):
+        pip = (self.virtualenv_dir / 'bin' / 'pip').path
         cmdspec = (
-            ['pip', 'install']
+            [pip, 'install']
             + (['--index-url=' + index_server_url] if index_server_url else [])
             + [package_spec])
-
-        result = external_process.run(cmdspec)
+        env = {'PIP_CONFIG_FILE': os.devnull}
+        result = external_process.run(cmdspec, env=env)
         if result.status != 0:
             raise exceptions.MissingPythonDependency(result)
 
