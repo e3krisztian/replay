@@ -1,5 +1,6 @@
 import unittest
 TODO = unittest.skip('not implemented yet')
+from distutils.spawn import find_executable
 
 from temp_dir import within_temp_dir
 import getpass
@@ -250,6 +251,13 @@ class Test_PythonDependencies_virtualenv_name(unittest.TestCase):
         self.assertEqual('_replay_e8a8bbe2f9fd4e9286aeedab2a5009e2', ve_name1)
 
 
+POSTGRES_IS_AVAILABLE = find_executable('psql')
+
+
+@unittest.skipUnless(
+    POSTGRES_IS_AVAILABLE,
+    'PostgreSQL client tools not available'
+)
 class TestPostgres(unittest.TestCase):
 
     def fixture(self):
