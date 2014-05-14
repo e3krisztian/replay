@@ -5,7 +5,7 @@ import replay.main as m
 import mock
 from temp_dir import within_temp_dir
 import pkg_resources
-from externals.fspath import working_directory
+from externals import working_directory
 
 
 class Test_parse_args(unittest.TestCase):

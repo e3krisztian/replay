@@ -4,7 +4,7 @@ TODO = unittest.skip('not implemented yet')
 from temp_dir import within_temp_dir
 import getpass
 import os
-from externals import fspath
+import externals
 
 from replay.tests import fixtures
 
@@ -39,7 +39,7 @@ class TestInputs(unittest.TestCase):
         with f.plugin:
             self.assertEqual(
                 b'hello',
-                (fspath.working_directory() / 'an input file').content)
+                (externals.working_directory() / 'an input file').content)
 
 
 class TestOutputs(unittest.TestCase):
@@ -53,7 +53,9 @@ class TestOutputs(unittest.TestCase):
             ''')
 
         with f.plugin:
-            (fspath.working_directory() / 'an output file').content = b'data'
+            (
+                externals.working_directory() / 'an output file'
+            ).content = b'data'
 
         self.assertEqual(
             b'data',
@@ -376,7 +378,7 @@ class TestExecute(unittest.TestCase):
 
     @within_temp_dir
     def test_python_script_executed(self):
-        wd = fspath.working_directory()
+        wd = externals.working_directory()
         (wd / 'script.py').content = (
             b'''open('output', 'w').write('hello from python')''')
 
@@ -417,7 +419,7 @@ class TestExecute(unittest.TestCase):
 
     @within_temp_dir
     def test_short_inline_shell_script_executed(self):
-        wd = fspath.working_directory()
+        wd = externals.working_directory()
         (wd / 'script').content = b'echo hello from /bin/sh > output'
 
         f = fixtures.PluginContext(

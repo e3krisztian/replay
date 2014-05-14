@@ -1,5 +1,5 @@
 import argparse
-from externals import fspath
+import externals
 import os.path
 import sys
 import replay.context
@@ -24,7 +24,7 @@ def parse_args(args):
     parser.add_argument(
         '--datastore',
         '--ds',
-        default=fspath.working_directory().path,
+        default=externals.working_directory().path,
         help='Persistent place for data (default: %(default)s)')
 
     parser.add_argument(
@@ -49,7 +49,7 @@ def parse_args(args):
     args = parser.parse_args(args)
 
     # fix script_path
-    args.script_path = fspath.FsPath(args.script_path).path
+    args.script_path = externals.File(args.script_path).path
 
     return args
 
@@ -57,18 +57,18 @@ def parse_args(args):
 def get_script_working_directory(args):
     if args.script_working_directory is TEMPORARY_DIRECTORY:
         return TEMPORARY_DIRECTORY
-    return fspath.FsPath(args.script_working_directory)
+    return externals.File(args.script_working_directory)
 
 
 def main():
     args = parse_args(sys.argv[1:])
 
     context = replay.context.Context(
-        fspath.FsPath(args.datastore),
-        fspath.FsPath(args.virtualenv_parent_directory),
+        externals.File(args.datastore),
+        externals.File(args.virtualenv_parent_directory),
         get_script_working_directory(args))
 
-    script_path = fspath.FsPath(args.script_path)
+    script_path = externals.File(args.script_path)
     script_dir = script_path.parent().path
 
     with open(args.script_path) as script_file:

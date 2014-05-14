@@ -6,7 +6,7 @@ from replay import exceptions
 import getpass
 import datetime
 import tempfile
-from externals import fspath
+import externals
 import hashlib
 import logging
 
@@ -128,7 +128,7 @@ class _DataStorePlugin(Plugin):
 
     def _file_pairs(self, copy_spec):
         datastore = self.context.datastore
-        working_directory = fspath.working_directory()
+        working_directory = externals.working_directory()
 
         for spec in copy_spec:
             for local_file, ds_file in spec.iteritems():

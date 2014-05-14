@@ -1,7 +1,7 @@
-from externals.fake import Fake as MemoryStore
+from externals import Memory
+from externals import working_directory
 from replay import context
 import pkg_resources
-from externals.fspath import working_directory
 import os.path
 
 
@@ -14,7 +14,7 @@ class PluginContext(object):
     def __init__(self, script=None):
         venv_parent_dir = working_directory() / 'replay_virtualenvs'
 
-        self.datastore = MemoryStore()
+        self.datastore = Memory()
         self.context = context.Context(
             self.datastore,
             venv_parent_dir,
